@@ -1,25 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
-
-/* 示例二手商品数据 */
-const marketItems = [
-  { id: 1,  title: "二手 iPad Air 4",       price: 1800, date: "2小时前",  description: "95新，配件齐全，可面交",   category: "数码" },
-  { id: 2,  title: "高等数学教材（第七版）", price: 25,   date: "3小时前",  description: "有少量笔记标注",           category: "教材" },
-  { id: 3,  title: "小米台灯",              price: 35,   date: "昨天",     description: "毕业带不走，便宜出",        category: "生活" },
-  { id: 4,  title: "Nike Air Max 运动鞋",   price: 120,  date: "2天前",    description: "42码，八成新",             category: "服饰" },
-  { id: 5,  title: "罗技 G304 鼠标",        price: 89,   date: "3天前",    description: "无线游戏鼠标，手感极佳",    category: "数码" },
-  { id: 6,  title: "考研英语真题集",         price: 15,   date: "4天前",    description: "2015-2025 十年真题",       category: "教材" },
-  { id: 7,  title: "宿舍小风扇",            price: 20,   date: "5天前",    description: "USB 充电，三挡调速",        category: "生活" },
-  { id: 8,  title: "优衣库黑色外套",        price: 60,   date: "一周前",   description: "L码，几乎没穿过",          category: "服饰" },
-];
+import { getItemsByType } from "@/data/items";
 
 const categories = ["全部", "教材", "数码", "生活", "服饰"];
 
 export default function MarketPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("全部");
+
+  const marketItems = getItemsByType("market");
 
   const filteredItems = marketItems.filter((item) => {
     const matchesSearch =
@@ -62,10 +54,12 @@ export default function MarketPage() {
         ))}
       </div>
 
-      {/* 商品列表 */}
+      {/* 商品列表 —— 点击卡片跳转详情 */}
       <div className="p-4 grid grid-cols-2 gap-3">
         {filteredItems.map((item) => (
-          <ItemCard key={item.id} {...item} type="market" />
+          <Link key={item.id} href={`/item/${item.id}`}>
+            <ItemCard {...item} />
+          </Link>
         ))}
       </div>
 
