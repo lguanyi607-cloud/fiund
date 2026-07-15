@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getItemById } from "@/data/items";
+import { useFavorites, toggleFavorite } from "@/data/favorites";
 
 export default function ItemDetailPage({
   params,
@@ -10,6 +11,9 @@ export default function ItemDetailPage({
 }) {
   const { id } = params;
   const item = getItemById(Number(id));
+  const favIds = useFavorites();
+  const itemId = Number(id);
+  const isFav = favIds.includes(itemId);
 
   if (!item) {
     return (
@@ -43,6 +47,17 @@ export default function ItemDetailPage({
           <span className="text-sm">返回</span>
         </Link>
         <h1 className="text-sm font-medium text-gray-800 truncate flex-1">物品详情</h1>
+        <button
+          onClick={() => toggleFavorite(itemId)}
+          className="p-1 transition active:scale-90"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24"
+            fill={isFav ? "#f59e0b" : "none"}
+            stroke={isFav ? "#f59e0b" : "#9ca3af"}
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </button>
       </header>
 
       {/* 图片区域 */}
