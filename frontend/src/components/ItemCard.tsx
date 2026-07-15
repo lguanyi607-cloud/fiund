@@ -20,11 +20,15 @@ export default function ItemCard({
   location,
 }: ItemCardProps) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-orange-100/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
+    <div className="bg-white rounded-2xl overflow-hidden border border-orange-100/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 group">
       {/* 图片区域 */}
-      <div className="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 relative">
+      <div className="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 relative overflow-hidden">
         {image ? (
-          <img src={image} alt={title} className="w-full h-full object-cover" />
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl">
             {type === "market" ? "🛍️" : type === "lost" ? "🔍" : "📦"}
@@ -33,7 +37,7 @@ export default function ItemCard({
         {/* 类型标签 */}
         {type !== "market" && (
           <span
-            className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white shadow-sm ${
+            className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full text-white shadow-sm backdrop-blur-sm ${
               type === "lost"
                 ? "bg-gradient-to-r from-orange-500 to-orange-400"
                 : "bg-gradient-to-r from-emerald-500 to-emerald-400"

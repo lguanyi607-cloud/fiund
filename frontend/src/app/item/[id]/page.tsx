@@ -65,17 +65,23 @@ export default function ItemDetailPage({
       </header>
 
       {/* 图片区域 */}
-      <div className="aspect-[4/3] bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 relative">
-        <div className="w-full h-full flex items-center justify-center text-7xl">
-          {item.type === "market" ? "🛍️" : item.type === "lost" ? "🔍" : "📦"}
-        </div>
+      <div className="aspect-[4/3] bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 relative overflow-hidden">
+        {item.image ? (
+          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-7xl">
+            {item.type === "market" ? "🛍️" : item.type === "lost" ? "🔍" : "📦"}
+          </div>
+        )}
+        {/* 渐变遮罩（让标签更清晰） */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         {/* 类型标签 */}
-        <span className={`absolute top-4 left-4 text-xs font-semibold px-3 py-1 rounded-full ${typeBg}`}>
+        <span className={`absolute top-4 left-4 text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm ${typeBg}`}>
           {typeLabel}
         </span>
         {/* 状态标签 */}
         {item.status && (
-          <span className={`absolute top-4 right-4 text-xs px-3 py-1 rounded-full text-white shadow-sm ${
+          <span className={`absolute top-4 right-4 text-xs px-3 py-1 rounded-full text-white shadow-sm backdrop-blur-sm ${
             item.status === "已认领"
               ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
               : "bg-gradient-to-r from-orange-400 to-amber-400"

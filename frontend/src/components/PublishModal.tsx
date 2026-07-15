@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { addDynamicItem } from "@/data/items";
 
 interface PublishModalProps {
@@ -19,6 +19,10 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
   const [location, setLocation] = useState("");
   const [contact, setContact] = useState("");
   const [detail, setDetail] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isMarket = type === "market";
   const headerTitle = isMarket ? "发布二手商品" : type === "lost" ? "发布寻物启事" : "发布拾到通知";
@@ -26,6 +30,45 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
   function reset() {
     setTitle(""); setDescription(""); setPrice(""); setCategory("");
     setLocation(""); setContact(""); setDetail("");
+    setImagePreview(null); setImageData(null);
+  }
+
+  function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImagePreview(result);
+      setImageData(result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleImageFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setDragOver(false);
+  }
+
+  function removeImage() {
+    setImagePreview(null);
+    setImageData(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function handleSubmit() {
@@ -40,6 +83,7 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
       location: !isMarket ? location : undefined,
       contact: contact.trim() || undefined,
       detail: detail.trim(),
+      image: imageData || undefined,
       status: isMarket ? undefined : type === "lost" ? "寻找中" : "等待认领",
     });
 
@@ -75,7 +119,7 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
         </div>
 
         {/* 标题栏 */}
-        <div className="px-5 py-3 flex items-center justify-between">
+        <div className="px-5 py-2 flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-800">{headerTitle}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -86,6 +130,54 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
 
         {/* 表单内容 */}
         <div className="px-5 pb-8 space-y-4">
+
+          {/* 图片上传 */}
+          <div>
+            <label className={label}>图片</label>
+            {imagePreview ? (
+              <div className="relative w-full aspect-video bg-gray-100 rounded-xl overflow-hidden border border-orange-100">
+                <img src={imagePreview} alt="预览" className="w-full h-full object-cover" />
+                <button
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
+                  dragOver
+                    ? "border-orange-400 bg-orange-50"
+                    : "border-orange-200 bg-orange-50/30 hover:border-orange-300 hover:bg-orange-50/60"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-2">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                </div>
+                <p className="text-xs text-gray-500">点击或拖拽上传图片</p>
+                <p className="text-[10px] text-gray-400 mt-1">支持 JPG、PNG，建议不超过 2MB</p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+
           {/* 标题 */}
           <div>
             <label className={label}>标题 *</label>
