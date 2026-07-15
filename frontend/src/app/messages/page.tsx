@@ -1,14 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-
-/* 示例私信数据 */
-const conversations = [
-  { id: 1, name: "张三", lastMessage: "iPad 还在吗？想看看实物", time: "刚刚",   unread: 2, avatar: "张" },
-  { id: 2, name: "李四", lastMessage: "校园卡找到了，谢谢你！",   time: "1小时前", unread: 0, avatar: "李" },
-  { id: 3, name: "王五", lastMessage: "教材可以便宜点吗？",       time: "昨天",   unread: 1, avatar: "王" },
-  { id: 4, name: "赵六", lastMessage: "钥匙是你的吗？来宿舍取",   time: "2天前",  unread: 0, avatar: "赵" },
-];
+import { conversations } from "@/data/chats";
 
 /* 功能菜单项 */
 const menuItems = [
@@ -114,8 +108,9 @@ export default function ProfilePage() {
           <h3 className="text-sm font-semibold text-gray-700 px-1 mb-2">私信消息</h3>
           <div className="bg-white rounded-xl shadow-sm overflow-hidden divide-y divide-gray-50">
             {conversations.map((conv) => (
-              <div
+              <Link
                 key={conv.id}
+                href={`/chat/${conv.id}`}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm shrink-0">
@@ -133,7 +128,7 @@ export default function ProfilePage() {
                     {conv.unread}
                   </span>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
