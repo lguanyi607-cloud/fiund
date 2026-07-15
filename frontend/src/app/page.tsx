@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
-import { getMixedItems } from "@/data/items";
+import { useItems } from "@/data/items";
 
 export default function HomePage() {
-  const items = getMixedItems();
+  const allItems = useItems();
+  const items = allItems.slice(0, 8);
 
   return (
     <div className="min-h-screen">
@@ -14,7 +17,7 @@ export default function HomePage() {
       </header>
 
       {/* 混合卡片流 —— 点击卡片跳转详情 */}
-      <div className="p-4 grid grid-cols-2 gap-3">
+      <div className="p-4 grid grid-cols-2 gap-3 pb-24">
         {items.map((item) => (
           <Link key={item.id} href={`/item/${item.id}`}>
             <ItemCard {...item} />

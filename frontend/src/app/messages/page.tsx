@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 /* 示例私信数据 */
 const conversations = [
@@ -11,8 +11,7 @@ const conversations = [
 ];
 
 export default function MessagesPage() {
-  /* 登录状态 —— 后续接入 Supabase Auth */
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, login, logout } = useAuth();
 
   /* ---- 未登录：登录拦截页 ---- */
   if (!isLoggedIn) {
@@ -42,7 +41,7 @@ export default function MessagesPage() {
         </p>
 
         <button
-          onClick={() => setIsLoggedIn(true)}
+          onClick={login}
           className="w-full max-w-xs py-3 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition active:scale-[0.98]"
         >
           立即登录
@@ -62,7 +61,7 @@ export default function MessagesPage() {
       <header className="bg-white px-4 py-3 sticky top-0 z-40 border-b border-gray-100 flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-800">私信</h1>
         <button
-          onClick={() => setIsLoggedIn(false)}
+          onClick={logout}
           className="text-xs text-gray-400 hover:text-red-500 transition"
         >
           退出

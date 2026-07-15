@@ -73,4 +73,39 @@
 
 ---
 
+### 2026-07-15 — 发布功能 + 全局登录拦截
+
+**任务描述：**
+为二手交易和失物招领页面添加"发布物品"功能（右下角 + 按钮），同时要求发布操作必须登录后才能使用，未登录时弹出登录提醒弹窗。登录状态需要全局共享（私信页、发布按钮共用同一套登录态）。
+
+**AI 工具：** QoderWork (Agent Mode)
+
+**Prompt 摘要：**
+> "继续帮我添加上线功能，在二手交易和失物招领发布键位置是在右下加ui是一个加号"
+> "注意这个只有登录后才可以使用还有如果没有登录就要提醒登录"
+
+**生成内容清单：**
+
+| 文件路径 | 说明 |
+|----------|------|
+| `src/contexts/AuthContext.tsx` | 全局登录状态 Context，提供 login/logout/isLoggedIn，localStorage 持久化 |
+| `src/components/PublishModal.tsx` | 发布表单底部抽屉组件，根据类型（market/lost/found）自动切换表单字段 |
+| `src/components/LoginPromptModal.tsx` | 登录提醒底部弹窗，带锁图标和"立即登录"按钮 |
+| `src/data/items.ts` | 数据层升级：新增 addDynamicItem()、useItems() hook、localStorage 读写、订阅通知模式 |
+| `src/app/layout.tsx` | 根布局包裹 AuthProvider，全局提供登录状态 |
+| `src/app/market/page.tsx` | 接入 FAB + 登录拦截：未登录弹提醒，登录后打开发布表单 |
+| `src/app/lost-found/page.tsx` | 同上，FAB 先弹类型选择（寻物/拾到），再打开对应表单 |
+| `src/app/messages/page.tsx` | 改用全局 useAuth() 替代本地 useState，登录/退出全局同步 |
+| `src/app/page.tsx` | 首页改用 useItems() hook，新发布的物品会出现在首页 |
+
+**效果评估：**
+- 发布功能完整可用：填写表单 → 提交 → 物品立即出现在列表顶部，刷新页面后仍存在
+- 登录拦截覆盖所有需要身份的操作：发布按钮、私信页面
+- 登录状态全局共享：任意位置登录后，所有页面同步解锁
+- 失物招领 FAB 支持类型选择（寻物/拾到），再弹出对应表单
+
+**用时：** 约 5 分钟
+
+---
+
 *后续开发中的 AI 辅助记录请继续追加于此。*

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import TabBar from "@/components/TabBar";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "Fiund - 校园物品流转平台",
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <main className="pb-20 min-h-screen">{children}</main>
-        <TabBar />
+        <AuthProvider>
+          <main className="pb-20 min-h-screen">{children}</main>
+          <TabBar />
+        </AuthProvider>
       </body>
     </html>
   );

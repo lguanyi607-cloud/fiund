@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 export interface Item {
   id: number;
   title: string;
@@ -12,8 +14,81 @@ export interface Item {
   detail: string;
 }
 
-/* 所有物品的统一数据源 —— 后续替换为 API 调用 */
-export const allItems: Item[] = [
+/* ══════════════════════════════════════════════════════════
+   动态物品 —— localStorage 持久化 + 订阅通知
+   ══════════════════════════════════════════════════════════ */
+let dynamicItems: Item[] = [];
+const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((fn) => fn());
+}
+
+/** 添加新物品（自动持久化到 localStorage 并通知订阅者） */
+export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
+  const newItem: Item = {
+    ...item,
+    id: Date.now(),
+    date: "刚刚",
+  };
+  dynamicItems = [newItem, ...dynamicItems];
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("fiund_items", JSON.stringify(dynamicItems));
+    } catch {}
+  }
+  notify();
+  return newItem;
+}
+
+function loadDynamicItems(): Item[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("fiund_items");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** React Hook —— 获取全部物品（静态 + 动态），自动响应新增 */
+export function useItems(): Item[] {
+  const [dynamic, setDynamic] = useState<Item[]>([]);
+
+  useEffect(() => {
+    setDynamic(loadDynamicItems());
+    const sub = () => setDynamic([...dynamicItems]);
+    listeners.add(sub);
+    return () => { listeners.delete(sub); };
+  }, []);
+
+  return [...staticItems, ...dynamic];
+}
+
+/** 根据 id 查找物品 */
+export function getItemById(id: number): Item | undefined {
+  return [...staticItems, ...dynamicItems].find((item) => item.id === id);
+}
+
+/** 按类型筛选 */
+export function getItemsByType(
+  type: "market" | "lost" | "found",
+  items?: Item[]
+): Item[] {
+  const source = items ?? [...staticItems, ...dynamicItems];
+  return source.filter((item) => item.type === type);
+}
+
+/** 获取混合列表（首页用） */
+export function getMixedItems(items?: Item[]): Item[] {
+  const source = items ?? [...staticItems, ...dynamicItems];
+  return source.slice(0, 8);
+}
+
+/* ══════════════════════════════════════════════════════════
+   静态示例数据 —— 后续替换为 API 调用
+   ══════════════════════════════════════════════════════════ */
+const staticItems: Item[] = [
   /* ---- 二手交易 ---- */
   {
     id: 1,
@@ -186,18 +261,3 @@ export const allItems: Item[] = [
       "上周三下午在实验楼一楼大厅的伞架上拾到一把深蓝色天堂折叠伞，伞柄处有磨损。已放在实验楼一楼值班室，请失主到值班室报伞的特征即可领取。",
   },
 ];
-
-/** 根据 id 查找物品 */
-export function getItemById(id: number): Item | undefined {
-  return allItems.find((item) => item.id === id);
-}
-
-/** 按类型筛选 */
-export function getItemsByType(type: "market" | "lost" | "found"): Item[] {
-  return allItems.filter((item) => item.type === type);
-}
-
-/** 获取混合列表（首页用） */
-export function getMixedItems(): Item[] {
-  return allItems.slice(0, 6);
-}

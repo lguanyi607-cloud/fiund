@@ -3,15 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
-import { getItemsByType } from "@/data/items";
+import PublishModal from "@/components/PublishModal";
+import LoginPromptModal from "@/components/LoginPromptModal";
+import { useItems } from "@/data/items";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["全部", "教材", "数码", "生活", "服饰"];
 
 export default function MarketPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("全部");
+  const [showPublish, setShowPublish] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const marketItems = getItemsByType("market");
+  const { isLoggedIn } = useAuth();
+  const allItems = useItems();
+  const marketItems = allItems.filter((item) => item.type === "market");
 
   const filteredItems = marketItems.filter((item) => {
     const matchesSearch =
@@ -22,6 +29,14 @@ export default function MarketPage() {
       activeCategory === "全部" || item.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
+
+  function handleFabClick() {
+    if (isLoggedIn) {
+      setShowPublish(true);
+    } else {
+      setShowLoginPrompt(true);
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -54,8 +69,8 @@ export default function MarketPage() {
         ))}
       </div>
 
-      {/* 商品列表 —— 点击卡片跳转详情 */}
-      <div className="p-4 grid grid-cols-2 gap-3">
+      {/* 商品列表 */}
+      <div className="p-4 grid grid-cols-2 gap-3 pb-24">
         {filteredItems.map((item) => (
           <Link key={item.id} href={`/item/${item.id}`}>
             <ItemCard {...item} />
@@ -66,6 +81,24 @@ export default function MarketPage() {
       {filteredItems.length === 0 && (
         <p className="text-center text-gray-400 py-12 text-sm">暂无相关商品</p>
       )}
+
+      {/* 右下角 FAB 发布按钮 */}
+      <button
+        onClick={handleFabClick}
+        className="fixed bottom-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition active:scale-90"
+        style={{ right: "max(1rem, calc(50% - 232px))" }}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+
+      {/* 发布表单（仅登录后） */}
+      <PublishModal open={showPublish} onClose={() => setShowPublish(false)} type="market" />
+
+      {/* 登录提醒弹窗（未登录时） */}
+      <LoginPromptModal open={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
     </div>
   );
 }
