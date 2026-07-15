@@ -201,7 +201,7 @@ const staticItems: Item[] = [
     id: 101,
     title: "寻找丢失的校园卡",
     description: "蓝色卡套，内有校园一卡通",
-    image: "https://images.unsplash.com/photo-1550920492-7d6f1aa5b3af?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=400&fit=crop&q=80",
     type: "lost",
     status: "寻找中",
     date: "今天",
