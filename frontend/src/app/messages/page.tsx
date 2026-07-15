@@ -6,9 +6,9 @@ import { conversations } from "@/data/chats";
 
 /* 功能菜单项 */
 const menuItems = [
-  { label: "我的发布", icon: "📦", desc: "查看你发布的物品" },
-  { label: "我的收藏", icon: "⭐", desc: "收藏感兴趣的物品" },
-  { label: "浏览记录", icon: "👁️", desc: "最近看过的物品" },
+  { label: "我的发布", icon: "📦", desc: "查看你发布的物品", href: "/my-items" },
+  { label: "我的收藏", icon: "⭐", desc: "收藏感兴趣的物品", href: "/favorites" },
+  { label: "浏览记录", icon: "👁️", desc: "最近看过的物品",   href: "/history" },
 ];
 
 export default function ProfilePage() {
@@ -84,8 +84,9 @@ export default function ProfilePage() {
       {/* ═══ 功能菜单 ═══ */}
       <div className="mx-4 -mt-4 bg-white rounded-xl shadow-sm overflow-hidden">
         {menuItems.map((item, idx) => (
-          <div
+          <Link
             key={item.label}
+            href={item.href}
             className={`flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition cursor-pointer ${
               idx < menuItems.length - 1 ? "border-b border-gray-50" : ""
             }`}
@@ -98,7 +99,7 @@ export default function ProfilePage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
-          </div>
+          </Link>
         ))}
       </div>
 
