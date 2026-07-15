@@ -17,11 +17,15 @@ CORS(app, origins=[
     "http://127.0.0.1:3000",
 ])
 
-# 初始化 Supabase 客户端
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL", ""),
-    os.getenv("SUPABASE_SERVICE_KEY", ""),
-)
+# 初始化 Supabase 客户端（仅在配置了环境变量时）
+_supabase_url = os.getenv("SUPABASE_URL", "")
+_supabase_key = os.getenv("SUPABASE_SERVICE_KEY", "")
+
+if _supabase_url and _supabase_key:
+    supabase: Client = create_client(_supabase_url, _supabase_key)
+else:
+    supabase = None
+    print("[WARNING] Supabase 未配置，请在 .env 中设置 SUPABASE_URL 和 SUPABASE_SERVICE_KEY")
 
 
 # ── 注册蓝图 ────────────────────────────────────────────

@@ -52,6 +52,11 @@ function loadDynamicItems(): Item[] {
   }
 }
 
+// 初始化时从 localStorage 加载，确保 getItemById 在刷新后也能找到用户发布的物品
+if (typeof window !== "undefined") {
+  dynamicItems = loadDynamicItems();
+}
+
 /** React Hook —— 获取全部物品（静态 + 动态），自动响应新增 */
 export function useItems(): Item[] {
   const [dynamic, setDynamic] = useState<Item[]>([]);

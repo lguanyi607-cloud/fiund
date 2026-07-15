@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getItemById } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
+import { recordView } from "@/data/history";
 
 export default function ItemDetailPage({
   params,
@@ -10,10 +13,25 @@ export default function ItemDetailPage({
   params: { id: string };
 }) {
   const { id } = params;
+  const router = useRouter();
   const item = getItemById(Number(id));
   const favIds = useFavorites();
   const itemId = Number(id);
   const isFav = favIds.includes(itemId);
+
+  // 记录浏览历史
+  useEffect(() => {
+    if (item) {
+      recordView({
+        itemId: item.id,
+        title: item.title,
+        description: item.description,
+        image: item.image,
+        type: item.type,
+        price: item.price,
+      });
+    }
+  }, [id]);
 
   if (!item) {
     return (
@@ -39,17 +57,23 @@ export default function ItemDetailPage({
     ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
     : "bg-blue-50 text-blue-600 border border-blue-200";
 
+  function handleAction(action: string) {
+    alert(`${action}功能暂未开放，后续将接入后端服务`);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部导航 */}
       <header className="bg-white/90 backdrop-blur-md px-4 py-3 sticky top-0 z-40 flex items-center gap-3"
         style={{ boxShadow: "0 1px 8px rgba(0, 0, 0, 0.04)" }}>
-        <Link href="javascript:void(0)" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition"
-          onClick={() => typeof window !== 'undefined' && window.history.back()}>
+        <button
+          onClick={() => router.back()}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition"
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-        </Link>
+        </button>
         <h1 className="text-sm font-semibold text-gray-800 truncate flex-1">物品详情</h1>
         <button
           onClick={() => toggleFavorite(itemId)}
@@ -73,13 +97,10 @@ export default function ItemDetailPage({
             {item.type === "market" ? "🛍️" : item.type === "lost" ? "🔍" : "📦"}
           </div>
         )}
-        {/* 渐变遮罩（让标签更清晰） */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-        {/* 类型标签 */}
         <span className={`absolute top-4 left-4 text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm ${typeBg}`}>
           {typeLabel}
         </span>
-        {/* 状态标签 */}
         {item.status && (
           <span className={`absolute top-4 right-4 text-xs px-3 py-1 rounded-full text-white shadow-sm backdrop-blur-sm ${
             item.status === "已认领"
@@ -93,15 +114,12 @@ export default function ItemDetailPage({
 
       {/* 内容区域 */}
       <div className="bg-white px-5 py-5 -mt-3 rounded-t-3xl relative z-10 animate-slide-up">
-        {/* 标题 */}
         <h2 className="text-xl font-bold text-gray-800 leading-tight">{item.title}</h2>
 
-        {/* 价格 (二手商品) */}
         {isMarket && item.price !== undefined && (
           <p className="text-3xl font-extrabold text-gradient mt-3">¥{item.price}</p>
         )}
 
-        {/* 信息标签 */}
         <div className="flex flex-wrap gap-2 mt-4">
           {item.category && (
             <span className="text-xs px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg font-medium border border-orange-100">{item.category}</span>
@@ -124,7 +142,6 @@ export default function ItemDetailPage({
           </span>
         </div>
 
-        {/* 详细描述 */}
         <div className="mt-6">
           <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
             <div className="w-1 h-4 bg-gradient-primary rounded-full" />
@@ -133,7 +150,6 @@ export default function ItemDetailPage({
           <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{item.detail}</p>
         </div>
 
-        {/* 联系方式 */}
         {item.contact && (
           <div className="mt-5 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl border border-orange-100">
             <h3 className="text-sm font-bold text-orange-700 mb-1 flex items-center gap-1.5">
@@ -146,23 +162,22 @@ export default function ItemDetailPage({
           </div>
         )}
 
-        {/* 底部操作按钮 */}
         <div className="mt-7 flex gap-3">
           {isMarket ? (
             <>
-              <button className="flex-1 py-3.5 bg-gradient-primary text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
+              <button onClick={() => handleAction("我想要")} className="flex-1 py-3.5 bg-gradient-primary text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
                 我想要
               </button>
-              <button className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98]">
+              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
                 私信卖家
-              </button>
+              </Link>
             </>
           ) : item.type === "lost" ? (
-            <button className="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
+            <button onClick={() => handleAction("我有线索")} className="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
               我有线索
             </button>
           ) : (
-            <button className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
+            <button onClick={() => handleAction("认领")} className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
               这是我的物品
             </button>
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { addDynamicItem } from "@/data/items";
 
 interface PublishModalProps {
@@ -31,7 +31,13 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
     setTitle(""); setDescription(""); setPrice(""); setCategory("");
     setLocation(""); setContact(""); setDetail("");
     setImagePreview(null); setImageData(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
+
+  // 弹窗打开时重置表单
+  useEffect(() => {
+    if (open) reset();
+  }, [open]);
 
   function handleImageFile(file: File) {
     if (!file.type.startsWith("image/")) return;

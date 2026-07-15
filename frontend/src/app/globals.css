@@ -12,7 +12,7 @@ body {
     Arial,
     sans-serif;
   background: linear-gradient(180deg, #fff8f0 0%, #fef3e2 100%);
-  background-attachment: fixed;
+  background-attachment: scroll;
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;

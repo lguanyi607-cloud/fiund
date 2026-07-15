@@ -96,7 +96,7 @@ export default function LostFoundPage() {
         {filteredItems.map((item, idx) => (
           <Link key={item.id} href={`/item/${item.id}`}
             className="animate-slide-up"
-            style={{ animationDelay: `${idx * 40}ms`, animationFillMode: "both" }}>
+            style={{ animationDelay: `${Math.min(idx, 10) * 40}ms`, animationFillMode: "both" }}>
             <ItemCard {...item} />
           </Link>
         ))}

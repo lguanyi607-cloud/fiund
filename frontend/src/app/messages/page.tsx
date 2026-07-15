@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/data/chats";
+import { useItems } from "@/data/items";
+import { useFavorites } from "@/data/favorites";
+import { useHistory } from "@/data/history";
 
 /* 功能菜单项 */
 const menuItems = [
@@ -14,6 +17,13 @@ const menuItems = [
 export default function ProfilePage() {
   const { isLoggedIn, login, logout } = useAuth();
   const conversations = useConversations();
+  const allItems = useItems();
+  const favIds = useFavorites();
+  const historyItems = useHistory();
+
+  const myItemsCount = allItems.filter((item) => item.id > 1000000).length;
+  const favCount = favIds.length;
+  const historyCount = historyItems.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,17 +79,17 @@ export default function ProfilePage() {
         {isLoggedIn && (
           <div className="flex justify-around mt-5 bg-white/15 rounded-2xl py-3.5" style={{ backdropFilter: "blur(10px)" }}>
             <div className="text-center">
-              <p className="text-xl font-bold text-white">3</p>
+              <p className="text-xl font-bold text-white">{myItemsCount}</p>
               <p className="text-xs text-orange-100">发布</p>
             </div>
             <div className="w-px bg-white/25" />
             <div className="text-center">
-              <p className="text-xl font-bold text-white">5</p>
+              <p className="text-xl font-bold text-white">{favCount}</p>
               <p className="text-xs text-orange-100">收藏</p>
             </div>
             <div className="w-px bg-white/25" />
             <div className="text-center">
-              <p className="text-xl font-bold text-white">12</p>
+              <p className="text-xl font-bold text-white">{historyCount}</p>
               <p className="text-xs text-orange-100">浏览</p>
             </div>
           </div>
