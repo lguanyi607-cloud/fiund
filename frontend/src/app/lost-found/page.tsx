@@ -12,6 +12,7 @@ const filters = ["全部", "寻找中", "等待认领", "已认领"];
 
 export default function LostFoundPage() {
   const [activeFilter, setActiveFilter] = useState("全部");
+  const [search, setSearch] = useState("");
   const [showChoice, setShowChoice] = useState(false);
   const [publishType, setPublishType] = useState<"lost" | "found" | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -23,8 +24,15 @@ export default function LostFoundPage() {
   );
 
   const filteredItems = lostFoundItems.filter((item) => {
-    if (activeFilter === "全部") return true;
-    return item.status === activeFilter;
+    const matchesFilter = activeFilter === "全部" || item.status === activeFilter;
+    if (!matchesFilter) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q) ||
+      (item.location && item.location.toLowerCase().includes(q))
+    );
   });
 
   function handleFabClick() {
@@ -40,7 +48,30 @@ export default function LostFoundPage() {
       {/* 顶部标题 */}
       <header className="bg-white px-4 pt-4 pb-3 sticky top-0 z-40"
         style={{ boxShadow: "0 2px 10px rgba(0, 0, 0, 0.04)" }}>
-        <h1 className="text-lg font-bold text-gray-800">失物招领</h1>
+        <h1 className="text-lg font-bold text-gray-800 mb-3">失物招领</h1>
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="搜索物品、地点..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-orange-50/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 border border-orange-100 transition-all duration-200 placeholder:text-gray-400"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-white"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* 状态筛选标签 */}
@@ -75,6 +106,14 @@ export default function LostFoundPage() {
         <div className="flex flex-col items-center justify-center py-16">
           <div className="text-4xl mb-3">📭</div>
           <p className="text-gray-400 text-sm">暂无相关信息</p>
+          {search.trim() && (
+            <button
+              onClick={() => setSearch("")}
+              className="mt-3 text-orange-500 text-xs font-medium"
+            >
+              清除搜索
+            </button>
+          )}
         </div>
       )}
 
