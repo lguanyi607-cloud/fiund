@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 export interface Message {
   id: number;
   senderId: string;       // "me" | 对方用户 id
@@ -15,7 +17,10 @@ export interface Conversation {
   messages: Message[];
 }
 
-export const conversations: Conversation[] = [
+/* ══════════════════════════════════════════════════════════
+   静态会话数据
+   ══════════════════════════════════════════════════════════ */
+const staticConversations: Conversation[] = [
   {
     id: 1,
     name: "张三",
@@ -81,6 +86,113 @@ export const conversations: Conversation[] = [
   },
 ];
 
+/* ══════════════════════════════════════════════════════════
+   动态消息 —— localStorage 持久化 + 订阅通知
+   ══════════════════════════════════════════════════════════ */
+
+// 存储结构: { [conversationId]: { messages: Message[], lastMessage: string, time: string, unread: number } }
+interface DynamicConvData {
+  messages: Message[];
+  lastMessage: string;
+  time: string;
+  unread: number;
+}
+
+let dynamicData: Record<number, DynamicConvData> = {};
+const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((fn) => fn());
+}
+
+function loadDynamicData(): Record<number, DynamicConvData> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem("fiund_chats");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDynamicData() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("fiund_chats", JSON.stringify(dynamicData));
+  } catch {}
+}
+
+// 初始化加载
+if (typeof window !== "undefined") {
+  dynamicData = loadDynamicData();
+}
+
+/** 获取合并后的完整会话列表（静态 + 动态消息） */
+export function getConversations(): Conversation[] {
+  return staticConversations.map((conv) => {
+    const extra = dynamicData[conv.id];
+    if (!extra) return conv;
+    return {
+      ...conv,
+      messages: [...conv.messages, ...extra.messages],
+      lastMessage: extra.lastMessage || conv.lastMessage,
+      time: extra.time || conv.time,
+      unread: extra.unread ?? conv.unread,
+    };
+  });
+}
+
+/** 根据 id 获取会话（含动态消息） */
 export function getConversationById(id: number): Conversation | undefined {
-  return conversations.find((c) => c.id === id);
+  return getConversations().find((c) => c.id === id);
+}
+
+/** 发送消息（持久化到 localStorage） */
+export function addMessage(conversationId: number, text: string): Message {
+  const msg: Message = {
+    id: Date.now(),
+    senderId: "me",
+    text,
+    time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+  };
+
+  if (!dynamicData[conversationId]) {
+    dynamicData[conversationId] = { messages: [], lastMessage: "", time: "", unread: 0 };
+  }
+
+  dynamicData[conversationId].messages.push(msg);
+  dynamicData[conversationId].lastMessage = text;
+  dynamicData[conversationId].time = "刚刚";
+
+  saveDynamicData();
+  notify();
+  return msg;
+}
+
+/** 获取所有会话列表（React Hook，自动订阅更新） */
+export function useConversations(): Conversation[] {
+  const [convs, setConvs] = useState<Conversation[]>(getConversations());
+
+  useEffect(() => {
+    setConvs(getConversations());
+    const sub = () => setConvs(getConversations());
+    listeners.add(sub);
+    return () => { listeners.delete(sub); };
+  }, []);
+
+  return convs;
+}
+
+/** 获取单个会话的消息（React Hook） */
+export function useConversation(id: number): Conversation | undefined {
+  const [conv, setConv] = useState<Conversation | undefined>(getConversationById(id));
+
+  useEffect(() => {
+    setConv(getConversationById(id));
+    const sub = () => setConv(getConversationById(id));
+    listeners.add(sub);
+    return () => { listeners.delete(sub); };
+  }, [id]);
+
+  return conv;
 }

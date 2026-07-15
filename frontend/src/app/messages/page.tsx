@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { conversations } from "@/data/chats";
+import { useConversations } from "@/data/chats";
 
 /* 功能菜单项 */
 const menuItems = [
@@ -13,6 +13,7 @@ const menuItems = [
 
 export default function ProfilePage() {
   const { isLoggedIn, login, logout } = useAuth();
+  const conversations = useConversations();
 
   return (
     <div className="min-h-screen bg-gray-50">

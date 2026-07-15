@@ -2,19 +2,21 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { getConversationById, type Message } from "@/data/chats";
+import { useConversation, addMessage, type Message } from "@/data/chats";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
-  const conv = getConversationById(Number(params.id));
+  const convId = Number(params.id);
+  const conv = useConversation(convId);
 
-  const [messages, setMessages] = useState<Message[]>(conv?.messages ?? []);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messages = conv?.messages ?? [];
 
   /* 自动滚到底部 */
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   if (!conv) {
     return (
@@ -33,13 +35,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   function handleSend() {
     const text = input.trim();
     if (!text) return;
-    const newMsg: Message = {
-      id: Date.now(),
-      senderId: "me",
-      text,
-      time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-    };
-    setMessages((prev) => [...prev, newMsg]);
+    addMessage(convId, text);
     setInput("");
   }
 
@@ -73,7 +69,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           const isMe = msg.senderId === "me";
           return (
             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} animate-fade-in`}
-              style={{ animationDelay: `${idx * 30}ms`, animationFillMode: "both" }}>
+              style={{ animationDelay: `${Math.min(idx, 10) * 30}ms`, animationFillMode: "both" }}>
               <div className={`flex items-end gap-2 max-w-[75%] ${isMe ? "flex-row-reverse" : ""}`}>
                 {/* 头像 */}
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 shadow-sm ${
