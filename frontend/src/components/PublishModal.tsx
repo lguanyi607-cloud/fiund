@@ -22,7 +22,6 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
 
   const isMarket = type === "market";
   const headerTitle = isMarket ? "发布二手商品" : type === "lost" ? "发布寻物启事" : "发布拾到通知";
-  const accent = isMarket ? "blue" : type === "lost" ? "orange" : "green";
 
   function reset() {
     setTitle(""); setDescription(""); setPrice(""); setCategory("");
@@ -49,8 +48,8 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
   }
 
   /* ---- 共用样式 ---- */
-  const label = "block text-xs text-gray-500 mb-1";
-  const input = "w-full px-3 py-2 bg-gray-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-300 border border-gray-100 transition";
+  const label = "block text-xs text-gray-500 mb-1.5 font-medium";
+  const input = "w-full px-3.5 py-2.5 bg-orange-50/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 border border-orange-100 transition-all duration-200 placeholder:text-gray-400";
 
   return (
     <>
@@ -59,33 +58,34 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
         className={`fixed inset-0 bg-black/40 z-50 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
+        style={{ backdropFilter: "blur(4px)" }}
         onClick={onClose}
       />
 
       {/* 表单抽屉 */}
       <div
-        className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-3xl z-50 transition-transform duration-300 ease-out ${
+        className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white rounded-t-[28px] z-50 transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
         style={{ maxHeight: "90vh", overflowY: "auto" }}
       >
         {/* 拖拽指示条 */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          <div className="w-10 h-1 bg-orange-200 rounded-full" />
         </div>
 
         {/* 标题栏 */}
-        <div className="px-5 py-2 flex items-center justify-between">
+        <div className="px-5 py-3 flex items-center justify-between">
           <h2 className="text-base font-bold text-gray-800">{headerTitle}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
         {/* 表单内容 */}
-        <div className="px-5 pb-6 space-y-4">
+        <div className="px-5 pb-8 space-y-4">
           {/* 标题 */}
           <div>
             <label className={label}>标题 *</label>
@@ -148,12 +148,10 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
           <button
             onClick={handleSubmit}
             disabled={!title.trim() || !detail.trim()}
-            className={`w-full py-3 rounded-xl text-sm font-medium text-white transition active:scale-[0.98] ${
+            className={`w-full py-3.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] ${
               !title.trim() || !detail.trim()
                 ? "bg-gray-300 cursor-not-allowed"
-                : accent === "blue" ? "bg-blue-600 hover:bg-blue-700"
-                : accent === "orange" ? "bg-orange-500 hover:bg-orange-600"
-                : "bg-green-500 hover:bg-green-600"
+                : "bg-gradient-primary shadow-warm hover:shadow-warm-lg"
             }`}
           >
             发布
