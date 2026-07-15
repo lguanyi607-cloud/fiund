@@ -70,7 +70,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
                   isMe ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-600"
                 }`}>
-                  {isMe ? "我" : conv.avatar}
+                  {isMe ? "U" : conv.avatar}
                 </div>
 
                 {/* 气泡 */}
