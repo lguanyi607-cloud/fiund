@@ -45,11 +45,20 @@ const ChatIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const UserIcon = ({ active }: { active: boolean }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    stroke={active ? "#2563eb" : "#9ca3af"} strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 const tabs: Tab[] = [
   { href: "/",          label: "首页",     icon: (a) => <HomeIcon   active={a} /> },
   { href: "/market",    label: "二手交易", icon: (a) => <TagIcon    active={a} /> },
   { href: "/lost-found",label: "失物招领", icon: (a) => <SearchIcon active={a} /> },
-  { href: "/messages",  label: "私信",     icon: (a) => <ChatIcon   active={a} /> },
+  { href: "/messages",  label: "我的",     icon: (a) => <UserIcon   active={a} /> },
 ];
 
 export default function TabBar() {
