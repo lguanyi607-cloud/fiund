@@ -44,7 +44,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-b from-orange-50/30 to-gray-50">
+    <div className="flex flex-col bg-gradient-to-b from-orange-50/30 to-gray-50"
+      style={{ height: "calc(100vh - 60px)" }}>
       {/* ═══ 顶部导航 ═══ */}
       <header className="bg-white/90 backdrop-blur-md px-4 py-3 flex items-center gap-3 shrink-0"
         style={{ boxShadow: "0 1px 8px rgba(0, 0, 0, 0.04)" }}>
@@ -66,7 +67,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       </header>
 
       {/* ═══ 消息列表 ═══ */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+        style={{ WebkitOverflowScrolling: "touch" }}>
         {messages.map((msg, idx) => {
           const isMe = msg.senderId === "me";
           return (
@@ -102,7 +104,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* ═══ 底部输入区 ═══ */}
-      <div className="bg-white/90 backdrop-blur-md border-t border-orange-100 px-4 py-3 flex items-center gap-2 shrink-0">
+      <div className="bg-white border-t border-orange-100 px-4 py-3 flex items-center gap-2 shrink-0">
         <input
           type="text"
           value={input}
