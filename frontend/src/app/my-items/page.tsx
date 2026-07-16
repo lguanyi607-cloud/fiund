@@ -53,19 +53,7 @@ export default function MyItemsPage() {
             <Link key={item.id} href={`/item/${item.id}`}
               className="animate-slide-up"
               style={{ animationDelay: `${idx * 40}ms`, animationFillMode: "both" }}>
-              <div className="relative">
-                <ItemCard {...item} />
-                {/* 类型角标 */}
-                <span className={`absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-md text-white font-medium shadow-sm ${
-                  item.type === "market"
-                    ? "bg-gradient-to-r from-blue-500 to-blue-400"
-                    : item.type === "lost"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-400"
-                    : "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                }`}>
-                  {typeLabel(item.type)}
-                </span>
-              </div>
+              <ItemCard {...item} />
             </Link>
           ))}
         </div>
