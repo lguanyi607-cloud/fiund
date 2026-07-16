@@ -136,15 +136,16 @@ export default function ProfilePage() {
                 </div>
               </>
             )}
-
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
           </div>
+
+          {/* 头像文件选择（放在 button 外面避免非法嵌套） */}
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
 
           {/* 用户名 + 状态 */}
           <div className="flex-1 min-w-0">
