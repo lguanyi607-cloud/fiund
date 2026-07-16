@@ -7,6 +7,7 @@ import { useConversations } from "@/data/chats";
 import { useItems } from "@/data/items";
 import { useFavorites } from "@/data/favorites";
 import { useHistory } from "@/data/history";
+import LoginPromptModal from "@/components/LoginPromptModal";
 
 /* 功能菜单项 */
 const menuItems = [
@@ -17,8 +18,8 @@ const menuItems = [
 ];
 
 export default function ProfilePage() {
-  const { isLoggedIn, username, avatar, login, logout, setUsername, setAvatar } = useAuth();
-  const conversations = useConversations();
+  const { isLoggedIn, username, email, avatar, login, logout, setUsername, setAvatar } = useAuth();
+  const conversations = useConversations(isLoggedIn ? username : undefined);
   const allItems = useItems();
   const favIds = useFavorites();
   const historyItems = useHistory();
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [showEditName, setShowEditName] = useState(false);
   const [editName, setEditName] = useState("");
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [mounted, setMounted] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,13 +166,13 @@ export default function ProfilePage() {
                     </svg>
                   </button>
                 </div>
-                <p className="text-xs text-orange-100 mt-0.5">已登录 · student@example.com</p>
+                <p className="text-xs text-orange-100 mt-0.5">已登录 · {mounted ? (email || "未设置邮箱") : ""}</p>
               </>
             ) : (
               <>
                 <h2 className="text-lg font-bold text-white">未登录</h2>
                 <button
-                  onClick={login}
+                  onClick={() => setShowLoginPrompt(true)}
                   className="mt-1.5 px-4 py-1.5 bg-white text-orange-600 rounded-full text-xs font-semibold hover:bg-orange-50 transition active:scale-95 shadow-sm"
                 >
                   点击登录
@@ -280,7 +282,7 @@ export default function ProfilePage() {
             </div>
             <p className="text-sm text-gray-500 mb-4">登录后即可使用私信、发布、收藏等功能</p>
             <button
-              onClick={login}
+              onClick={() => setShowLoginPrompt(true)}
               className="w-full py-3.5 bg-gradient-primary text-white rounded-2xl font-semibold text-sm shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]"
             >
               立即登录
@@ -332,6 +334,8 @@ export default function ProfilePage() {
           </div>
         </>
       )}
+
+      <LoginPromptModal open={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
     </div>
   );
 }

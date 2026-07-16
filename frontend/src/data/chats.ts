@@ -87,7 +87,7 @@ const staticConversations: Conversation[] = [
 ];
 
 /* ══════════════════════════════════════════════════════════
-   动态消息 —— localStorage 持久化 + 订阅通知
+   动态消息 —— localStorage 持久化（按用户隔离）+ 订阅通知
    ══════════════════════════════════════════════════════════ */
 
 // 存储结构: { [conversationId]: { messages: Message[], lastMessage: string, time: string, unread: number } }
@@ -98,6 +98,7 @@ interface DynamicConvData {
   unread: number;
 }
 
+let currentUsername = "";
 let dynamicData: Record<number, DynamicConvData> = {};
 const listeners = new Set<() => void>();
 
@@ -105,32 +106,40 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
-function loadDynamicData(): Record<number, DynamicConvData> {
-  if (typeof window === "undefined") return {};
+function getStorageKey(username: string) {
+  return `fiund_chats_${username}`;
+}
+
+function loadDynamicData(username: string): Record<number, DynamicConvData> {
+  if (typeof window === "undefined" || !username) return {};
   try {
-    const raw = localStorage.getItem("fiund_chats");
+    const raw = localStorage.getItem(getStorageKey(username));
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
 }
 
-function saveDynamicData() {
-  if (typeof window === "undefined") return;
+function saveDynamicData(username: string) {
+  if (typeof window === "undefined" || !username) return;
   try {
-    localStorage.setItem("fiund_chats", JSON.stringify(dynamicData));
+    localStorage.setItem(getStorageKey(username), JSON.stringify(dynamicData));
   } catch {}
 }
 
-// 初始化加载
-if (typeof window !== "undefined") {
-  dynamicData = loadDynamicData();
+/** 切换当前用户（登录后调用） */
+export function switchChatUser(username: string) {
+  currentUsername = username;
+  dynamicData = loadDynamicData(username);
+  notify();
 }
 
 /** 获取合并后的完整会话列表（静态 + 动态消息） */
-export function getConversations(): Conversation[] {
+export function getConversations(username?: string): Conversation[] {
+  const user = username || currentUsername;
+  const data = user ? loadDynamicData(user) : {};
   return staticConversations.map((conv) => {
-    const extra = dynamicData[conv.id];
+    const extra = data[conv.id];
     if (!extra) return conv;
     return {
       ...conv,
@@ -143,12 +152,13 @@ export function getConversations(): Conversation[] {
 }
 
 /** 根据 id 获取会话（含动态消息） */
-export function getConversationById(id: number): Conversation | undefined {
-  return getConversations().find((c) => c.id === id);
+export function getConversationById(id: number, username?: string): Conversation | undefined {
+  return getConversations(username).find((c) => c.id === id);
 }
 
-/** 发送消息（持久化到 localStorage） */
-export function addMessage(conversationId: number, text: string): Message {
+/** 发送消息（持久化到 localStorage，按用户隔离） */
+export function addMessage(conversationId: number, text: string, username?: string): Message {
+  const user = username || currentUsername;
   const msg: Message = {
     id: Date.now(),
     senderId: "me",
@@ -164,35 +174,36 @@ export function addMessage(conversationId: number, text: string): Message {
   dynamicData[conversationId].lastMessage = text;
   dynamicData[conversationId].time = "刚刚";
 
-  saveDynamicData();
+  saveDynamicData(user);
   notify();
   return msg;
 }
 
-/** 获取所有会话列表（React Hook，自动订阅更新） */
-export function useConversations(): Conversation[] {
-  const [convs, setConvs] = useState<Conversation[]>(getConversations());
+/** 获取所有会话列表（React Hook，自动订阅更新，按用户隔离） */
+export function useConversations(username?: string): Conversation[] {
+  const [convs, setConvs] = useState<Conversation[]>(getConversations(username));
 
   useEffect(() => {
-    setConvs(getConversations());
-    const sub = () => setConvs(getConversations());
+    if (username) switchChatUser(username);
+    setConvs(getConversations(username));
+    const sub = () => setConvs(getConversations(username));
     listeners.add(sub);
     return () => { listeners.delete(sub); };
-  }, []);
+  }, [username]);
 
   return convs;
 }
 
 /** 获取单个会话的消息（React Hook） */
-export function useConversation(id: number): Conversation | undefined {
-  const [conv, setConv] = useState<Conversation | undefined>(getConversationById(id));
+export function useConversation(id: number, username?: string): Conversation | undefined {
+  const [conv, setConv] = useState<Conversation | undefined>(getConversationById(id, username));
 
   useEffect(() => {
-    setConv(getConversationById(id));
-    const sub = () => setConv(getConversationById(id));
+    setConv(getConversationById(id, username));
+    const sub = () => setConv(getConversationById(id, username));
     listeners.add(sub);
     return () => { listeners.delete(sub); };
-  }, [id]);
+  }, [id, username]);
 
   return conv;
 }

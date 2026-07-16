@@ -7,8 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const convId = Number(params.id);
-  const conv = useConversation(convId);
-  const { avatar, username } = useAuth();
+  const { avatar, username, isLoggedIn } = useAuth();
+  const conv = useConversation(convId, isLoggedIn ? username : undefined);
 
   const [input, setInput] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -41,7 +41,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   function handleSend() {
     const text = input.trim();
     if (!text) return;
-    addMessage(convId, text);
+    addMessage(convId, text, username);
     setInput("");
   }
 
