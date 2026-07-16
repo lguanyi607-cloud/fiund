@@ -53,6 +53,7 @@ export default function ItemDetailPage({
   }
 
   const isMarket = item.type === "market";
+  const isMyItem = item.id > 1000; // 动态物品（用户自己发布的）id = Date.now()，远大于静态 id
   const typeLabel = item.type === "lost" ? "寻物启事" : item.type === "found" ? "拾到通知" : "二手出售";
   const typeBg = item.type === "lost"
     ? "bg-orange-50 text-orange-600 border border-orange-200"
@@ -166,7 +167,11 @@ export default function ItemDetailPage({
         )}
 
         <div className="mt-7 flex gap-3">
-          {isMarket ? (
+          {isMyItem ? (
+            <div className="flex-1 py-3.5 bg-gray-50 text-gray-400 rounded-2xl text-sm font-medium text-center border border-gray-100">
+              这是你发布的物品
+            </div>
+          ) : isMarket ? (
             <>
               <button
                 onClick={() => toggleWant(itemId)}
