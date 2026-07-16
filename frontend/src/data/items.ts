@@ -42,6 +42,17 @@ export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
   return newItem;
 }
 
+/** 下架物品（从动态列表中移除并持久化） */
+export function removeDynamicItem(id: number) {
+  dynamicItems = dynamicItems.filter((item) => item.id !== id);
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("fiund_items", JSON.stringify(dynamicItems));
+    } catch {}
+  }
+  notify();
+}
+
 function loadDynamicItems(): Item[] {
   if (typeof window === "undefined") return [];
   try {

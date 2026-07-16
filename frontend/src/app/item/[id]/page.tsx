@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getItemById } from "@/data/items";
+import { getItemById, removeDynamicItem } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
 import { useWants, toggleWant } from "@/data/wants";
 import { recordView } from "@/data/history";
@@ -76,6 +76,13 @@ export default function ItemDetailPage({
     setComments((prev) => [{ author: username || "匿名用户", text, time }, ...prev]);
     setCommentText("");
     setShowCommentInput(false);
+  }
+
+  function handleDelist() {
+    if (confirm("确定要下架这件物品吗？")) {
+      removeDynamicItem(itemId);
+      router.push("/my-items");
+    }
   }
 
   return (
@@ -236,9 +243,12 @@ export default function ItemDetailPage({
         {/* 操作按钮 */}
         <div className="mt-7 flex gap-3">
           {isMyItem ? (
-            <div className="flex-1 py-3.5 bg-gray-50 text-gray-400 rounded-2xl text-sm font-medium text-center border border-gray-100">
-              这是你发布的物品
-            </div>
+            <button
+              onClick={handleDelist}
+              className="flex-1 py-3.5 bg-red-50 text-red-500 rounded-2xl text-sm font-semibold border border-red-200 hover:bg-red-100 transition-all duration-200 active:scale-[0.98]"
+            >
+              下架物品
+            </button>
           ) : isMarket ? (
             <>
               <button
