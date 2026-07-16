@@ -162,7 +162,7 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
         </div>
 
         {/* 表单内容 */}
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-5 pb-20 space-y-4">
 
           {/* 图片上传 */}
           <div>
