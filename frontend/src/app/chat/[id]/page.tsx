@@ -3,10 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useConversation, addMessage, type Message } from "@/data/chats";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const convId = Number(params.id);
   const conv = useConversation(convId);
+  const { avatar, username } = useAuth();
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -72,12 +74,16 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               style={{ animationDelay: `${Math.min(idx, 10) * 30}ms`, animationFillMode: "both" }}>
               <div className={`flex items-end gap-2 max-w-[75%] ${isMe ? "flex-row-reverse" : ""}`}>
                 {/* 头像 */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 shadow-sm ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 shadow-sm overflow-hidden ${
                   isMe
                     ? "bg-gradient-primary text-white"
                     : "bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600"
                 }`}>
-                  {isMe ? "U" : conv.avatar}
+                  {isMe
+                    ? avatar
+                      ? <img src={avatar} alt="我" className="w-full h-full object-cover" />
+                      : <span>{username.charAt(0).toUpperCase()}</span>
+                    : conv.avatar}
                 </div>
 
                 {/* 气泡 */}

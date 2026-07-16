@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/data/chats";
@@ -15,15 +16,53 @@ const menuItems = [
 ];
 
 export default function ProfilePage() {
-  const { isLoggedIn, login, logout } = useAuth();
+  const { isLoggedIn, username, avatar, login, logout, setUsername, setAvatar } = useAuth();
   const conversations = useConversations();
   const allItems = useItems();
   const favIds = useFavorites();
   const historyItems = useHistory();
 
+  const [showEditName, setShowEditName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
   const myItemsCount = allItems.filter((item) => item.id > 1000000).length;
   const favCount = favIds.length;
   const historyCount = historyItems.length;
+
+  function handleAvatarFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("图片大小建议不超过 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setAvatar(result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleAvatarFile(file);
+    setShowAvatarMenu(false);
+  }
+
+  function handleRemoveAvatar() {
+    setAvatar(null);
+    setShowAvatarMenu(false);
+  }
+
+  function handleSaveName() {
+    const name = editName.trim();
+    if (name) {
+      setUsername(name);
+    }
+    setShowEditName(false);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,20 +70,95 @@ export default function ProfilePage() {
       <div className="bg-gradient-to-br from-orange-500 via-orange-400 to-amber-400 px-5 pt-6 pb-10">
         <div className="flex items-center gap-4">
           {/* 头像 */}
-          <div className="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center text-white text-2xl font-bold shrink-0 ring-2 ring-white/40 shadow-lg">
-            {isLoggedIn ? "U" : (
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+          <div className="relative shrink-0">
+            <button
+              onClick={() => { if (isLoggedIn) setShowAvatarMenu(!showAvatarMenu); }}
+              className="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-white/40 shadow-lg overflow-hidden hover:ring-white/60 transition"
+            >
+              {avatar ? (
+                <img src={avatar} alt="头像" className="w-full h-full object-cover" />
+              ) : isLoggedIn ? (
+                <span>{username.charAt(0).toUpperCase()}</span>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
+            </button>
+            {/* 头像编辑小图标 */}
+            {isLoggedIn && (
+              <button
+                onClick={() => setShowAvatarMenu(!showAvatarMenu)}
+                className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
             )}
+
+            {/* 头像操作菜单 */}
+            {showAvatarMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAvatarMenu(false)} />
+                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-orange-100 py-1 z-50 min-w-[130px] animate-scale-in">
+                  <button
+                    onClick={() => {
+                      avatarInputRef.current?.click();
+                      setShowAvatarMenu(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-orange-50 transition flex items-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    {avatar ? "更换头像" : "上传头像"}
+                  </button>
+                  {avatar && (
+                    <button
+                      onClick={handleRemoveAvatar}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-2"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                      移除头像
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
           </div>
 
           {/* 用户名 + 状态 */}
           <div className="flex-1 min-w-0">
             {isLoggedIn ? (
               <>
-                <h2 className="text-lg font-bold text-white">校园用户</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-white truncate">{username}</h2>
+                  <button
+                    onClick={() => { setEditName(username); setShowEditName(true); }}
+                    className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition shrink-0"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                </div>
                 <p className="text-xs text-orange-100 mt-0.5">已登录 · student@example.com</p>
               </>
             ) : (
@@ -173,6 +287,46 @@ export default function ProfilePage() {
 
       {/* 底部间距 */}
       <div className="h-8" />
+
+      {/* ═══ 修改用户名弹窗 ═══ */}
+      {showEditName && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-50" style={{ backdropFilter: "blur(4px)" }}
+            onClick={() => setShowEditName(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-8">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 animate-scale-in">
+              <h3 className="text-base font-bold text-gray-800 mb-4">修改昵称</h3>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={20}
+                className="w-full px-4 py-3 bg-orange-50/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 border border-orange-100 transition-all duration-200"
+                placeholder="请输入新昵称"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
+              />
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => setShowEditName(false)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveName}
+                  disabled={!editName.trim()}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${
+                    !editName.trim() ? "bg-gray-300 cursor-not-allowed" : "bg-gradient-primary shadow-warm"
+                  }`}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

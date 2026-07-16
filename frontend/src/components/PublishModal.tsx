@@ -22,6 +22,7 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageData, setImageData] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isMarket = type === "market";
@@ -36,11 +37,18 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
 
   // 弹窗打开时重置表单
   useEffect(() => {
-    if (open) reset();
+    if (open) {
+      reset();
+      setShowSuccess(false);
+    }
   }, [open]);
 
   function handleImageFile(file: File) {
     if (!file.type.startsWith("image/")) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("图片大小建议不超过 2MB");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -93,8 +101,12 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
       status: isMarket ? undefined : type === "lost" ? "寻找中" : "等待认领",
     });
 
-    reset();
-    onClose();
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      reset();
+      onClose();
+    }, 1200);
   }
 
   /* ---- 共用样式 ---- */
@@ -111,6 +123,21 @@ export default function PublishModal({ open, onClose, type }: PublishModalProps)
         style={{ backdropFilter: "blur(4px)" }}
         onClick={onClose}
       />
+
+      {/* 成功提示 */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
+          <div className="bg-white/95 rounded-2xl shadow-2xl px-8 py-6 flex flex-col items-center animate-scale-in"
+            style={{ backdropFilter: "blur(10px)" }}>
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-3 shadow-lg">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <p className="text-sm font-bold text-gray-800">发布成功</p>
+          </div>
+        </div>
+      )}
 
       {/* 表单抽屉 */}
       <div
