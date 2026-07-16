@@ -10,6 +10,7 @@ export interface HistoryRecord {
   viewedAt: string;
 }
 
+let currentUser = "";
 let history: HistoryRecord[] = [];
 const listeners = new Set<() => void>();
 
@@ -17,10 +18,14 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
-function load(): HistoryRecord[] {
-  if (typeof window === "undefined") return [];
+function getKey(username: string) {
+  return `fiund_history_${username}`;
+}
+
+function load(username: string): HistoryRecord[] {
+  if (typeof window === "undefined" || !username) return [];
   try {
-    const raw = localStorage.getItem("fiund_history");
+    const raw = localStorage.getItem(getKey(username));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -28,40 +33,47 @@ function load(): HistoryRecord[] {
 }
 
 function save() {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem("fiund_history", JSON.stringify(history));
-  } catch {}
+  if (typeof window !== "undefined" && currentUser) {
+    try {
+      localStorage.setItem(getKey(currentUser), JSON.stringify(history));
+    } catch {}
+  }
 }
 
-// 初始化
-if (typeof window !== "undefined") {
-  history = load();
+/** 切换当前用户 */
+export function switchHistoryUser(username: string) {
+  currentUser = username;
+  history = load(username);
+  notify();
 }
 
 /** 记录一次浏览 */
 export function recordView(record: Omit<HistoryRecord, "viewedAt">) {
-  // 去重：如果已有同一物品，先删除旧记录
+  if (!currentUser) return;
   history = history.filter((r) => r.itemId !== record.itemId);
-  // 新记录放最前面
   history = [
     { ...record, viewedAt: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) },
     ...history,
-  ].slice(0, 50); // 最多保留 50 条
+  ].slice(0, 50);
   save();
   notify();
 }
 
-/** React Hook 获取浏览记录 */
-export function useHistory(): HistoryRecord[] {
-  const [items, setItems] = useState<HistoryRecord[]>(history);
+/** React Hook 获取浏览记录，按用户隔离 */
+export function useHistory(username?: string): HistoryRecord[] {
+  const [items, setItems] = useState<HistoryRecord[]>([]);
 
   useEffect(() => {
-    setItems(load());
+    if (username) {
+      switchHistoryUser(username);
+      setItems(load(username));
+    } else {
+      setItems([]);
+    }
     const sub = () => setItems([...history]);
     listeners.add(sub);
     return () => { listeners.delete(sub); };
-  }, []);
+  }, [username]);
 
   return items;
 }

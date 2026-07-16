@@ -17,8 +17,9 @@ export interface Item {
 }
 
 /* ══════════════════════════════════════════════════════════
-   动态物品 —— localStorage 持久化 + 订阅通知
+   动态物品 —— localStorage 持久化（按用户隔离）+ 订阅通知
    ══════════════════════════════════════════════════════════ */
+let currentUser = "";
 let dynamicItems: Item[] = [];
 const listeners = new Set<() => void>();
 
@@ -26,22 +27,46 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
-/** 添加新物品（localStorage 持久化 + 同步到后端 API） */
-export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
-  const newItem: Item = {
-    ...item,
-    id: Date.now(),
-    date: "刚刚",
-  };
-  dynamicItems = [newItem, ...dynamicItems];
-  if (typeof window !== "undefined") {
+function getKey(username: string) {
+  return `fiund_items_${username}`;
+}
+
+function loadDynamicItems(username: string): Item[] {
+  if (typeof window === "undefined" || !username) return [];
+  try {
+    const raw = localStorage.getItem(getKey(username));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDynamicItems() {
+  if (typeof window !== "undefined" && currentUser) {
     try {
-      localStorage.setItem("fiund_items", JSON.stringify(dynamicItems));
+      localStorage.setItem(getKey(currentUser), JSON.stringify(dynamicItems));
     } catch {}
   }
+}
+
+/** 切换当前用户 */
+export function switchItemsUser(username: string) {
+  currentUser = username;
+  dynamicItems = loadDynamicItems(username);
+  notify();
+}
+
+/** 添加新物品（按用户隔离 + 同步后端） */
+export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
+  if (!currentUser) {
+    console.warn("未登录，无法发布物品");
+    return { ...item, id: 0, date: "刚刚" };
+  }
+  const newItem: Item = { ...item, id: Date.now(), date: "刚刚" };
+  dynamicItems = [newItem, ...dynamicItems];
+  saveDynamicItems();
   notify();
 
-  // 同步到后端 API（后台执行，不阻塞前端）
   itemsApi.create(item).catch((err) => {
     console.warn("[API] 物品同步失败（后端可能未启动）:", err.message);
   });
@@ -49,47 +74,41 @@ export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
   return newItem;
 }
 
-/** 下架物品（从动态列表中移除并持久化 + 同步后端） */
+/** 下架物品（按用户隔离 + 同步后端） */
 export function removeDynamicItem(id: number) {
   dynamicItems = dynamicItems.filter((item) => item.id !== id);
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem("fiund_items", JSON.stringify(dynamicItems));
-    } catch {}
-  }
+  saveDynamicItems();
   notify();
 
-  // 同步删除后端
   itemsApi.remove(id).catch((err) => {
     console.warn("[API] 物品删除同步失败:", err.message);
   });
 }
 
-function loadDynamicItems(): Item[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem("fiund_items");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
+// 初始化
+if (typeof window !== "undefined") {
+  const savedUser = localStorage.getItem("fiund_username");
+  if (savedUser) {
+    currentUser = savedUser;
+    dynamicItems = loadDynamicItems(savedUser);
   }
 }
 
-// 初始化时从 localStorage 加载，确保 getItemById 在刷新后也能找到用户发布的物品
-if (typeof window !== "undefined") {
-  dynamicItems = loadDynamicItems();
-}
-
-/** React Hook —— 获取全部物品（静态 + 动态），自动响应新增 */
-export function useItems(): Item[] {
+/** React Hook —— 获取全部物品（静态 + 动态），按用户隔离 */
+export function useItems(username?: string): Item[] {
   const [dynamic, setDynamic] = useState<Item[]>([]);
 
   useEffect(() => {
-    setDynamic(loadDynamicItems());
+    if (username) {
+      switchItemsUser(username);
+      setDynamic(loadDynamicItems(username));
+    } else {
+      setDynamic([]);
+    }
     const sub = () => setDynamic([...dynamicItems]);
     listeners.add(sub);
     return () => { listeners.delete(sub); };
-  }, []);
+  }, [username]);
 
   return [...staticItems, ...dynamic].sort((a, b) => b.id - a.id);
 }
@@ -115,10 +134,9 @@ export function getMixedItems(items?: Item[]): Item[] {
 }
 
 /* ══════════════════════════════════════════════════════════
-   静态示例数据 —— 后续替换为 API 调用
+   静态示例数据
    ══════════════════════════════════════════════════════════ */
 const staticItems: Item[] = [
-  /* ---- 二手交易 ---- */
   {
     id: 8,
     title: "二手 iPad Air 4",
@@ -223,8 +241,6 @@ const staticItems: Item[] = [
     detail:
       "优衣库2025年秋季款防风夹克，黑色L码。买回来后只穿过一次发现不太合身，吊牌已剪但几乎全新。适合170-178cm身高。",
   },
-
-  /* ---- 失物招领 ---- */
   {
     id: 106,
     title: "寻找丢失的校园卡",
@@ -292,7 +308,7 @@ const staticItems: Item[] = [
   },
   {
     id: 101,
-    title: "拾到一把雨伞",
+    title: "拾到了一把雨伞",
     description: "深蓝色折叠伞，天堂牌",
     image: "/images/items/106-umbrella.jpg",
     type: "found",

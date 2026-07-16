@@ -17,8 +17,8 @@ export default function LostFoundPage() {
   const [publishType, setPublishType] = useState<"lost" | "found" | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const { isLoggedIn } = useAuth();
-  const allItems = useItems();
+  const { isLoggedIn, username } = useAuth();
+  const allItems = useItems(isLoggedIn ? username : undefined);
   const lostFoundItems = allItems.filter(
     (item) => item.type === "lost" || item.type === "found"
   );

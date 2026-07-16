@@ -5,10 +5,12 @@ import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
 import { useItems } from "@/data/items";
 import { useFavorites } from "@/data/favorites";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function FavoritesPage() {
-  const allItems = useItems();
-  const favIds = useFavorites();
+  const { username, isLoggedIn } = useAuth();
+  const allItems = useItems(isLoggedIn ? username : undefined);
+  const favIds = useFavorites(isLoggedIn ? username : undefined);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);

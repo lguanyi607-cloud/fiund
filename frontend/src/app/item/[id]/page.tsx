@@ -17,9 +17,9 @@ export default function ItemDetailPage({
   const { id } = params;
   const router = useRouter();
   const item = getItemById(Number(id));
-  const favIds = useFavorites();
-  const wantIds = useWants();
-  const { username } = useAuth();
+  const { username, isLoggedIn } = useAuth();
+  const favIds = useFavorites(isLoggedIn ? username : undefined);
+  const wantIds = useWants(isLoggedIn ? username : undefined);
   const itemId = Number(id);
   const isFav = favIds.includes(itemId);
   const isWanted = wantIds.includes(itemId);

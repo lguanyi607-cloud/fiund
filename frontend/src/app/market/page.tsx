@@ -16,8 +16,8 @@ export default function MarketPage() {
   const [showPublish, setShowPublish] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const { isLoggedIn } = useAuth();
-  const allItems = useItems();
+  const { isLoggedIn, username } = useAuth();
+  const allItems = useItems(isLoggedIn ? username : undefined);
   const marketItems = allItems.filter((item) => item.type === "market");
 
   const filteredItems = marketItems.filter((item) => {

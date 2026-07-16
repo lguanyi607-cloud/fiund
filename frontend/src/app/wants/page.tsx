@@ -5,10 +5,12 @@ import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
 import { useItems } from "@/data/items";
 import { useWants } from "@/data/wants";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function WantsPage() {
-  const allItems = useItems();
-  const wantIds = useWants();
+  const { username, isLoggedIn } = useAuth();
+  const allItems = useItems(isLoggedIn ? username : undefined);
+  const wantIds = useWants(isLoggedIn ? username : undefined);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);

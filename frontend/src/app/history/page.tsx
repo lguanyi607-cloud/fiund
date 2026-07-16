@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useHistory } from "@/data/history";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function HistoryPage() {
-  const historyItems = useHistory();
+  const { username, isLoggedIn } = useAuth();
+  const historyItems = useHistory(isLoggedIn ? username : undefined);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);

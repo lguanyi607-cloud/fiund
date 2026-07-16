@@ -3,9 +3,11 @@
 import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
 import { useItems } from "@/data/items";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MyItemsPage() {
-  const allItems = useItems();
+  const { username, isLoggedIn } = useAuth();
+  const allItems = useItems(isLoggedIn ? username : undefined);
   /* 用户发布的物品 = 动态添加的物品（id > 1000000 表示用户创建的） */
   const myItems = allItems.filter((item) => item.id > 1000000);
 
