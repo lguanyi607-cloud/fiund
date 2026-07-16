@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getItemById } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
 import { useWants, toggleWant } from "@/data/wants";
 import { recordView } from "@/data/history";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ItemDetailPage({
   params,
@@ -18,9 +19,15 @@ export default function ItemDetailPage({
   const item = getItemById(Number(id));
   const favIds = useFavorites();
   const wantIds = useWants();
+  const { username } = useAuth();
   const itemId = Number(id);
   const isFav = favIds.includes(itemId);
   const isWanted = wantIds.includes(itemId);
+
+  /* 留言功能 */
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState<{ author: string; text: string; time: string }[]>([]);
 
   // 记录浏览历史
   useEffect(() => {
@@ -61,8 +68,14 @@ export default function ItemDetailPage({
     ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
     : "bg-blue-50 text-blue-600 border border-blue-200";
 
-  function handleAction(action: string) {
-    alert(`${action}功能暂未开放，后续将接入后端服务`);
+  function handleSubmitComment() {
+    const text = commentText.trim();
+    if (!text) return;
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    setComments((prev) => [{ author: username || "匿名用户", text, time }, ...prev]);
+    setCommentText("");
+    setShowCommentInput(false);
   }
 
   return (
@@ -166,6 +179,61 @@ export default function ItemDetailPage({
           </div>
         )}
 
+        {/* 留言列表 */}
+        {comments.length > 0 && (
+          <div className="mt-5 space-y-3">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+              <div className="w-1 h-4 bg-gradient-primary rounded-full" />
+              留言 ({comments.length})
+            </h3>
+            {comments.map((c, idx) => (
+              <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-gray-700">{c.author}</span>
+                  <span className="text-[10px] text-gray-400">{c.time}</span>
+                </div>
+                <p className="text-sm text-gray-600">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 留言输入框 */}
+        {showCommentInput && !isMyItem && (
+          <div className="mt-5 p-4 bg-orange-50/50 rounded-2xl border border-orange-100 animate-scale-in">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              maxLength={200}
+              rows={3}
+              className="w-full px-3 py-2.5 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 border border-orange-100 resize-none transition-all"
+              placeholder={item.type === "lost" ? "说说你的线索..." : "留言认领你的物品..."}
+              autoFocus
+            />
+            <div className="flex items-center justify-between mt-2.5">
+              <span className="text-[10px] text-gray-400">{commentText.length}/200</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowCommentInput(false); setCommentText(""); }}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim()}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all ${
+                    !commentText.trim() ? "bg-gray-300 cursor-not-allowed" : "bg-gradient-primary shadow-warm"
+                  }`}
+                >
+                  发送
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 操作按钮 */}
         <div className="mt-7 flex gap-3">
           {isMyItem ? (
             <div className="flex-1 py-3.5 bg-gray-50 text-gray-400 rounded-2xl text-sm font-medium text-center border border-gray-100">
@@ -188,13 +256,29 @@ export default function ItemDetailPage({
               </Link>
             </>
           ) : item.type === "lost" ? (
-            <button onClick={() => handleAction("我有线索")} className="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
-              我有线索
-            </button>
+            <>
+              <button
+                onClick={() => setShowCommentInput(!showCommentInput)}
+                className="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]"
+              >
+                我有线索
+              </button>
+              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
+                私信发布者
+              </Link>
+            </>
           ) : (
-            <button onClick={() => handleAction("认领")} className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
-              这是我的物品
-            </button>
+            <>
+              <button
+                onClick={() => setShowCommentInput(!showCommentInput)}
+                className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]"
+              >
+                认领留言
+              </button>
+              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
+                私信发布者
+              </Link>
+            </>
           )}
         </div>
       </div>
