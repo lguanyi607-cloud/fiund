@@ -7,6 +7,7 @@ import { getItemById, removeDynamicItem } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
 import { useWants, toggleWant } from "@/data/wants";
 import { recordView } from "@/data/history";
+import { findOrCreateConversation } from "@/data/chats";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ItemDetailPage({
@@ -60,7 +61,7 @@ export default function ItemDetailPage({
   }
 
   const isMarket = item.type === "market";
-  const isMyItem = item.id > 1000; // 动态物品（用户自己发布的）id = Date.now()，远大于静态 id
+  const isMyItem = item.owner === username;
   const typeLabel = item.type === "lost" ? "寻物启事" : item.type === "found" ? "拾到通知" : "二手出售";
   const typeBg = item.type === "lost"
     ? "bg-orange-50 text-orange-600 border border-orange-200"
@@ -83,6 +84,16 @@ export default function ItemDetailPage({
       removeDynamicItem(itemId);
       router.push("/my-items");
     }
+  }
+
+  function handleMessageOwner() {
+    if (!isLoggedIn) {
+      alert("请先登录后再私信");
+      return;
+    }
+    const ownerName = item.owner || item.contact || "匿名用户";
+    const chatId = findOrCreateConversation(ownerName, username);
+    router.push(`/chat/${chatId}`);
   }
 
   return (
@@ -261,9 +272,9 @@ export default function ItemDetailPage({
               >
                 {isWanted ? "✓ 已标记想要" : "我想要"}
               </button>
-              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
+              <button onClick={handleMessageOwner} className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
                 私信卖家
-              </Link>
+              </button>
             </>
           ) : item.type === "lost" ? (
             <>
@@ -273,9 +284,9 @@ export default function ItemDetailPage({
               >
                 我有线索
               </button>
-              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
+              <button onClick={handleMessageOwner} className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
                 私信发布者
-              </Link>
+              </button>
             </>
           ) : (
             <>
@@ -285,9 +296,9 @@ export default function ItemDetailPage({
               >
                 认领留言
               </button>
-              <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
+              <button onClick={handleMessageOwner} className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
                 私信发布者
-              </Link>
+              </button>
             </>
           )}
         </div>

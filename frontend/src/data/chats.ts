@@ -80,7 +80,12 @@ function loadConversations(username: string): Conversation[] {
   if (typeof window === "undefined" || !username) return [];
   try {
     const raw = localStorage.getItem(getKey(username));
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      // 数据格式损坏，重新初始化
+      localStorage.removeItem(getKey(username));
+    }
     // 首次使用，初始化默认会话并保存
     const defaults = getDefaultConversations();
     localStorage.setItem(getKey(username), JSON.stringify(defaults));
@@ -98,8 +103,45 @@ function saveConversations() {
   }
 }
 
+/** 迁移旧数据 */
+function migrateOldData(username: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const newKey = getKey(username);
+    if (localStorage.getItem(newKey)) return;
+
+    // 尝试从旧的全局 key 迁移
+    const oldRaw = localStorage.getItem("fiund_chats");
+    if (oldRaw) {
+      const parsed = JSON.parse(oldRaw);
+      if (Array.isArray(parsed)) {
+        localStorage.setItem(newKey, oldRaw);
+      } else if (typeof parsed === "object" && parsed !== null) {
+        // 旧格式: Record<number, {messages, lastMessage, time, unread}>
+        const defaults = getDefaultConversations();
+        for (const conv of defaults) {
+          const extra = parsed[conv.id] || parsed[String(conv.id)];
+          if (extra && Array.isArray(extra.messages)) {
+            conv.messages = extra.messages;
+            conv.lastMessage = extra.lastMessage || "";
+            conv.time = extra.time || "";
+            conv.unread = extra.unread ?? 0;
+          }
+        }
+        localStorage.setItem(newKey, JSON.stringify(defaults));
+      }
+      localStorage.removeItem("fiund_chats");
+    }
+
+    // 尝试从旧的按用户 key 迁移（之前的 per-user 格式）
+    const oldUserKey = `fiund_chats_${username}`;
+    // 这个 key 和 newKey 相同，已经在上面检查过了
+  } catch {}
+}
+
 /** 切换当前用户 */
 export function switchChatUser(username: string) {
+  migrateOldData(username);
   currentUsername = username;
   conversations = loadConversations(username);
   notify();
@@ -117,34 +159,146 @@ export function getConversationById(id: number, username?: string): Conversation
   return getConversations(username).find((c) => c.id === id);
 }
 
-/** 发送消息 */
-export function addMessage(conversationId: number, text: string, username?: string): Message {
+/** 查找或创建与某人的会话，返回会话 id */
+export function findOrCreateConversation(name: string, username?: string): number {
   const user = username || currentUsername;
-  if (!user) return { id: 0, senderId: "me", text: "", time: "" };
+  if (!user) return 0;
 
-  // 确保加载当前用户数据
   if (user !== currentUsername) {
     switchChatUser(user);
   }
 
+  // 查找已有会话
+  const existing = conversations.find((c) => c.name === name);
+  if (existing) return existing.id;
+
+  // 创建新会话
+  const newId = conversations.length > 0
+    ? Math.max(...conversations.map((c) => c.id)) + 1
+    : 1;
+  const newConv: Conversation = {
+    id: newId,
+    name,
+    avatar: name.charAt(0),
+    lastMessage: "",
+    time: "刚刚",
+    unread: 0,
+    messages: [],
+  };
+  conversations = [...conversations, newConv];
+  saveConversations();
+  notify();
+  return newId;
+}
+
+/* ══════════════════════════════════════════════════════════
+   共享消息存储 —— 聊天双方都能看到相同的消息记录
+   存储 key: fiund_msg_{userA}__{userB}（按字母序排列）
+   消息的 senderId 存储实际用户名（非 "me"）
+   ══════════════════════════════════════════════════════════ */
+
+function getPairKey(userA: string, userB: string): string {
+  const sorted = [userA, userB].sort();
+  return `fiund_msg_${sorted[0]}__${sorted[1]}`;
+}
+
+function loadSharedMessages(userA: string, userB: string): Message[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(getPairKey(userA, userB));
+    if (raw) return JSON.parse(raw);
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSharedMessages(userA: string, userB: string, messages: Message[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(getPairKey(userA, userB), JSON.stringify(messages));
+  } catch {}
+}
+
+/** 获取两人之间的消息列表 */
+export function getMessagesBetween(userA: string, userB: string): Message[] {
+  return loadSharedMessages(userA, userB);
+}
+
+/** 确保接收方的会话列表里有发送者的对话（这样接收方才能看到聊天） */
+function ensureRecipientConversation(senderName: string, recipientName: string) {
+  if (typeof window === "undefined" || !recipientName) return;
+  try {
+    const recipientKey = `fiund_chats_${recipientName}`;
+    let recipientConvs: Conversation[] = [];
+    try {
+      const raw = localStorage.getItem(recipientKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) recipientConvs = parsed;
+      }
+    } catch {}
+
+    // 如果接收方没有和发送者的对话，创建一个
+    if (!recipientConvs.find((c) => c.name === senderName)) {
+      const newId = recipientConvs.length > 0
+        ? Math.max(...recipientConvs.map((c) => c.id)) + 1
+        : 1;
+      recipientConvs.push({
+        id: newId,
+        name: senderName,
+        avatar: senderName.charAt(0),
+        lastMessage: "",
+        time: "刚刚",
+        unread: 1,
+        messages: [],
+      });
+      localStorage.setItem(recipientKey, JSON.stringify(recipientConvs));
+      console.log("[ensureRecipient] 已为", recipientName, "创建与", senderName, "的会话, id:", newId);
+    }
+  } catch {}
+}
+
+/** 发送消息（写入共享存储 + 更新发送者的会话元数据 + 确保接收方有对话） */
+export function addMessage(text: string, sender: string, contactName: string): Message {
+  console.log("[addMessage] 入参:", { text, sender, contactName });
+  if (!sender || !contactName) {
+    console.warn("[addMessage] sender或contactName为空，跳过");
+    return { id: 0, senderId: "", text: "", time: "" };
+  }
+
+  // 确保加载当前用户数据
+  if (sender !== currentUsername) {
+    switchChatUser(sender);
+  }
+
   const msg: Message = {
     id: Date.now(),
-    senderId: "me",
+    senderId: sender,
     text,
     time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
   };
 
-  const convIdx = conversations.findIndex((c) => c.id === conversationId);
+  // 写入共享消息存储
+  const messages = loadSharedMessages(sender, contactName);
+  messages.push(msg);
+  saveSharedMessages(sender, contactName, messages);
+  console.log("[addMessage] 已保存到:", getPairKey(sender, contactName), "消息数:", messages.length);
+
+  // 确保接收方的会话列表里有发送者的对话
+  ensureRecipientConversation(sender, contactName);
+
+  // 更新发送者的会话列表元数据（lastMessage / time）
+  const convIdx = conversations.findIndex((c) => c.name === contactName);
   if (convIdx >= 0) {
     conversations[convIdx] = {
       ...conversations[convIdx],
-      messages: [...conversations[convIdx].messages, msg],
       lastMessage: text,
       time: "刚刚",
     };
+    saveConversations();
   }
 
-  saveConversations();
   notify();
   return msg;
 }
@@ -185,4 +339,26 @@ export function useConversation(id: number, username?: string): Conversation | u
   }, [id, username]);
 
   return conv;
+}
+
+/** React Hook —— 获取两人之间的共享消息列表 */
+export function useMessages(myUsername: string | undefined, contactName: string | undefined): Message[] {
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    if (myUsername && contactName) {
+      setMessages(loadSharedMessages(myUsername, contactName));
+    } else {
+      setMessages([]);
+    }
+    const sub = () => {
+      if (myUsername && contactName) {
+        setMessages(loadSharedMessages(myUsername, contactName));
+      }
+    };
+    listeners.add(sub);
+    return () => { listeners.delete(sub); };
+  }, [myUsername, contactName]);
+
+  return messages;
 }

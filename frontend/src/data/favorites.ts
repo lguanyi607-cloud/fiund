@@ -32,8 +32,23 @@ function load(username: string): number[] {
   }
 }
 
+/** 迁移旧数据 */
+function migrateOldData(username: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const newKey = getKey(username);
+    if (localStorage.getItem(newKey)) return;
+    const oldRaw = localStorage.getItem("fiund_favorites");
+    if (oldRaw) {
+      localStorage.setItem(newKey, oldRaw);
+      localStorage.removeItem("fiund_favorites");
+    }
+  } catch {}
+}
+
 /** 切换当前用户 */
 export function switchFavoritesUser(username: string) {
+  migrateOldData(username);
   currentUser = username;
   favorites = load(username);
   notify();

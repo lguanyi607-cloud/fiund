@@ -20,7 +20,7 @@ const menuItems = [
 export default function ProfilePage() {
   const { isLoggedIn, username, email, avatar, login, logout, setUsername, setAvatar } = useAuth();
   const conversations = useConversations(isLoggedIn ? username : undefined);
-  const allItems = useItems(isLoggedIn ? username : undefined);
+  const allItems = useItems();
   const favIds = useFavorites(isLoggedIn ? username : undefined);
   const historyItems = useHistory(isLoggedIn ? username : undefined);
 

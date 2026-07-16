@@ -40,8 +40,23 @@ function save() {
   }
 }
 
+/** 迁移旧数据 */
+function migrateOldData(username: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const newKey = getKey(username);
+    if (localStorage.getItem(newKey)) return;
+    const oldRaw = localStorage.getItem("fiund_history");
+    if (oldRaw) {
+      localStorage.setItem(newKey, oldRaw);
+      localStorage.removeItem("fiund_history");
+    }
+  } catch {}
+}
+
 /** 切换当前用户 */
 export function switchHistoryUser(username: string) {
+  migrateOldData(username);
   currentUser = username;
   history = load(username);
   notify();

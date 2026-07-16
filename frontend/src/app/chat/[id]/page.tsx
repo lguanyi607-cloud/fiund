@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useConversation, addMessage, type Message } from "@/data/chats";
+import { useConversation, addMessage, getMessagesBetween } from "@/data/chats";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
@@ -12,9 +12,25 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const [input, setInput] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const messages = conv?.messages ?? [];
+  /* 从共享存储加载消息 + 轮询检测新消息 */
+  useEffect(() => {
+    if (!conv?.name || !username) {
+      console.log("[chat] 跳过加载: conv.name=", conv?.name, "username=", username);
+      setMessages([]);
+      return;
+    }
+    const load = () => {
+      const msgs = getMessagesBetween(username, conv.name);
+      console.log("[chat] 加载消息:", { username, contact: conv.name, count: msgs.length, msgs });
+      setMessages([...msgs]);
+    };
+    load();
+    const timer = setInterval(load, 500);
+    return () => clearInterval(timer);
+  }, [conv?.name, username]);
 
   /* 客户端挂载后才使用 localStorage 数据，避免水合不一致 */
   useEffect(() => { setMounted(true); }, []);
@@ -40,9 +56,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   function handleSend() {
     const text = input.trim();
-    if (!text) return;
-    addMessage(convId, text, username);
+    if (!text || !conv) return;
+    console.log("[chat] 发送消息:", { text, username, contactName: conv.name });
+    const msg = addMessage(text, username, conv.name);
+    console.log("[chat] addMessage返回:", msg);
     setInput("");
+    // 立即刷新消息列表
+    const updated = getMessagesBetween(username, conv.name);
+    console.log("[chat] 发送后消息数:", updated.length);
+    setMessages([...updated]);
   }
 
   return (
@@ -72,7 +94,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
         style={{ WebkitOverflowScrolling: "touch" }}>
         {messages.map((msg, idx) => {
-          const isMe = msg.senderId === "me";
+          const isMe = msg.senderId === username;
           return (
             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} animate-fade-in`}
               style={{ animationDelay: `${Math.min(idx, 10) * 30}ms`, animationFillMode: "both" }}>

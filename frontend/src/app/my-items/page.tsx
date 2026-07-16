@@ -7,9 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function MyItemsPage() {
   const { username, isLoggedIn } = useAuth();
-  const allItems = useItems(isLoggedIn ? username : undefined);
-  /* 用户发布的物品 = 动态添加的物品（id > 1000000 表示用户创建的） */
-  const myItems = allItems.filter((item) => item.id > 1000000);
+  const allItems = useItems();
+  /* 用户发布的物品 = owner 为当前用户名 */
+  const myItems = allItems.filter((item) => item.owner === username);
 
   const typeLabel = (type: string) => {
     if (type === "market") return "二手";

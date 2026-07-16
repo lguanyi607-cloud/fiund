@@ -4,14 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import ItemCard from "@/components/ItemCard";
 import { useItems } from "@/data/items";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const { username, isLoggedIn } = useAuth();
 
-  const allItems = useItems(isLoggedIn ? username : undefined);
+  const allItems = useItems();
 
   const filteredItems = allItems.filter((item) => {
     if (!search.trim()) return true;

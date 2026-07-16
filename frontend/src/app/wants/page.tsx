@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function WantsPage() {
   const { username, isLoggedIn } = useAuth();
-  const allItems = useItems(isLoggedIn ? username : undefined);
+  const allItems = useItems();
   const wantIds = useWants(isLoggedIn ? username : undefined);
   const [mounted, setMounted] = useState(false);
 
