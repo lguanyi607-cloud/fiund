@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConversations } from "@/data/chats";
@@ -25,7 +25,10 @@ export default function ProfilePage() {
   const [showEditName, setShowEditName] = useState(false);
   const [editName, setEditName] = useState("");
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const myItemsCount = allItems.filter((item) => item.id > 1000000).length;
   const favCount = favIds.length;
@@ -75,10 +78,10 @@ export default function ProfilePage() {
               onClick={() => { if (isLoggedIn) setShowAvatarMenu(!showAvatarMenu); }}
               className="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-white/40 shadow-lg overflow-hidden hover:ring-white/60 transition"
             >
-              {avatar ? (
+              {mounted && avatar ? (
                 <img src={avatar} alt="头像" className="w-full h-full object-cover" />
               ) : isLoggedIn ? (
-                <span>{username.charAt(0).toUpperCase()}</span>
+                <span>{mounted ? username.charAt(0).toUpperCase() : "U"}</span>
               ) : (
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -148,7 +151,7 @@ export default function ProfilePage() {
             {isLoggedIn ? (
               <>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-white truncate">{username}</h2>
+                  <h2 className="text-lg font-bold text-white truncate">{mounted ? username : "校园用户"}</h2>
                   <button
                     onClick={() => { setEditName(username); setShowEditName(true); }}
                     className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition shrink-0"

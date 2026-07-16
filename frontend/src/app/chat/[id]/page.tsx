@@ -11,9 +11,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const { avatar, username } = useAuth();
 
   const [input, setInput] = useState("");
+  const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = conv?.messages ?? [];
+
+  /* 客户端挂载后才使用 localStorage 数据，避免水合不一致 */
+  useEffect(() => { setMounted(true); }, []);
 
   /* 自动滚到底部 */
   useEffect(() => {
@@ -80,9 +84,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     : "bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600"
                 }`}>
                   {isMe
-                    ? avatar
+                    ? mounted && avatar
                       ? <img src={avatar} alt="我" className="w-full h-full object-cover" />
-                      : <span>{username.charAt(0).toUpperCase()}</span>
+                      : <span>{mounted ? username.charAt(0).toUpperCase() : "U"}</span>
                     : conv.avatar}
                 </div>
 
