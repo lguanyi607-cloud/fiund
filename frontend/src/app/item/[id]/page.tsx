@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getItemById } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
+import { useWants, toggleWant } from "@/data/wants";
 import { recordView } from "@/data/history";
 
 export default function ItemDetailPage({
@@ -16,8 +17,10 @@ export default function ItemDetailPage({
   const router = useRouter();
   const item = getItemById(Number(id));
   const favIds = useFavorites();
+  const wantIds = useWants();
   const itemId = Number(id);
   const isFav = favIds.includes(itemId);
+  const isWanted = wantIds.includes(itemId);
 
   // 记录浏览历史
   useEffect(() => {
@@ -165,8 +168,15 @@ export default function ItemDetailPage({
         <div className="mt-7 flex gap-3">
           {isMarket ? (
             <>
-              <button onClick={() => handleAction("我想要")} className="flex-1 py-3.5 bg-gradient-primary text-white rounded-2xl text-sm font-semibold shadow-warm hover:shadow-warm-lg transition-all duration-200 active:scale-[0.98]">
-                我想要
+              <button
+                onClick={() => toggleWant(itemId)}
+                className={`flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                  isWanted
+                    ? "bg-white text-orange-500 border-2 border-orange-400"
+                    : "bg-gradient-primary text-white shadow-warm hover:shadow-warm-lg"
+                }`}
+              >
+                {isWanted ? "✓ 已标记想要" : "我想要"}
               </button>
               <Link href="/chat/1" className="flex-1 py-3.5 bg-orange-50 text-orange-600 rounded-2xl text-sm font-semibold border border-orange-200 hover:bg-orange-100 transition-all duration-200 active:scale-[0.98] text-center">
                 私信卖家

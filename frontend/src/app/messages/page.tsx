@@ -11,6 +11,7 @@ import { useHistory } from "@/data/history";
 /* 功能菜单项 */
 const menuItems = [
   { label: "我的发布", icon: "📦", desc: "查看你发布的物品", href: "/my-items" },
+  { label: "我想要",   icon: "🛒", desc: "标记想要的物品",   href: "/wants" },
   { label: "我的收藏", icon: "⭐", desc: "收藏感兴趣的物品", href: "/favorites" },
   { label: "浏览记录", icon: "👁️", desc: "最近看过的物品",   href: "/history" },
 ];

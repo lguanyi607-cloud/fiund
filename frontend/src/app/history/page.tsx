@@ -1,10 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useHistory } from "@/data/history";
 
 export default function HistoryPage() {
   const historyItems = useHistory();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -16,7 +20,7 @@ export default function HistoryPage() {
           </svg>
         </Link>
         <h1 className="text-sm font-semibold text-gray-800 flex-1">浏览记录</h1>
-        {historyItems.length > 0 && (
+        {mounted && historyItems.length > 0 && (
           <span className="text-xs text-orange-500 font-medium bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">{historyItems.length} 条</span>
         )}
       </header>
