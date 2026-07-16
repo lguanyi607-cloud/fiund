@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { itemsApi } from "@/lib/api";
 
 export interface Item {
   id: number;
@@ -25,7 +26,7 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
-/** 添加新物品（自动持久化到 localStorage 并通知订阅者） */
+/** 添加新物品（localStorage 持久化 + 同步到后端 API） */
 export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
   const newItem: Item = {
     ...item,
@@ -39,10 +40,16 @@ export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
     } catch {}
   }
   notify();
+
+  // 同步到后端 API（后台执行，不阻塞前端）
+  itemsApi.create(item).catch((err) => {
+    console.warn("[API] 物品同步失败（后端可能未启动）:", err.message);
+  });
+
   return newItem;
 }
 
-/** 下架物品（从动态列表中移除并持久化） */
+/** 下架物品（从动态列表中移除并持久化 + 同步后端） */
 export function removeDynamicItem(id: number) {
   dynamicItems = dynamicItems.filter((item) => item.id !== id);
   if (typeof window !== "undefined") {
@@ -51,6 +58,11 @@ export function removeDynamicItem(id: number) {
     } catch {}
   }
   notify();
+
+  // 同步删除后端
+  itemsApi.remove(id).catch((err) => {
+    console.warn("[API] 物品删除同步失败:", err.message);
+  });
 }
 
 function loadDynamicItems(): Item[] {
