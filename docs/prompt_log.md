@@ -43,6 +43,40 @@
 
 **用时：** 约 3 分钟
 
+**AI 返回代码示例（layout.tsx 根布局）：**
+
+```tsx
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import TabBar from "@/components/TabBar";
+import { AuthProvider } from "@/contexts/AuthContext";
+
+export const metadata: Metadata = {
+  title: "Fiund - 校园物品流转平台",
+  description: "校园二手交易与失物招领一站式平台",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="zh-CN">
+      <body>
+        <AuthProvider>
+          <main className="pb-20 min-h-screen">{children}</main>
+          <TabBar />
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+```
+
 ### 2026-07-14 — 物品详情页功能与统一数据层
 
 **任务描述：**
@@ -166,6 +200,39 @@
 
 **用时：** 约 5 分钟
 
+**AI 返回代码示例（favorites.ts 收藏核心逻辑）：**
+
+```ts
+/** 切换收藏状态 */
+export function toggleFavorite(itemId: number) {
+  const idx = favorites.indexOf(itemId);
+  if (idx >= 0) {
+    favorites = favorites.filter((id) => id !== itemId);
+  } else {
+    favorites = [...favorites, itemId];
+  }
+  save();
+  notify();
+}
+
+/** React Hook —— 获取收藏 ID 列表，按用户隔离 */
+export function useFavorites(username?: string): number[] {
+  const [ids, setIds] = useState<number[]>([]);
+  useEffect(() => {
+    if (username) {
+      switchFavoritesUser(username);
+      setIds(load(username));
+    } else {
+      setIds([]);
+    }
+    const sub = () => setIds([...favorites]);
+    listeners.add(sub);
+    return () => { listeners.delete(sub); };
+  }, [username]);
+  return ids;
+}
+```
+
 ---
 
 ### 2026-07-15 — UI 美化、图片本地化与搜索功能
@@ -261,6 +328,30 @@
 
 **用时：** 约 8 分钟
 
+**AI 返回代码示例（AuthContext.tsx 注册函数）：**
+
+```tsx
+function register(name: string, password: string, emailAddress: string): true | string {
+  const users = loadUsers();
+  if (users[emailAddress]) return "该邮箱已被注册";
+  const nameTaken = Object.values(users).some((u) => u.username === name);
+  if (nameTaken) return "该用户名已被使用";
+  users[emailAddress] = { username: name, password };
+  saveUsers(users);
+
+  setIsLoggedIn(true);
+  setUsernameState(name);
+  setEmailState(emailAddress);
+  try {
+    localStorage.setItem("fiund_logged_in", "true");
+    localStorage.setItem("fiund_username", name);
+    localStorage.setItem("fiund_email", emailAddress);
+  } catch {}
+  setAvatarState(null);
+  return true;
+}
+```
+
 ---
 
 ### 2026-07-16 — 物品数据全局化与数据模型修正
@@ -320,6 +411,40 @@
 - 轮询机制保证消息实时性，发送后立即刷新列表
 
 **用时：** 约 10 分钟
+
+**AI 返回代码示例（chats.ts 双向消息发送与共享存储）：**
+
+```ts
+/** 发送消息（写入共享存储 + 更新发送者的会话元数据 + 确保接收方有对话） */
+export function addMessage(text: string, sender: string, contactName: string): Message {
+  if (!sender || !contactName) {
+    return { id: 0, senderId: "", text: "", time: "" };
+  }
+  if (sender !== currentUsername) {
+    switchChatUser(sender);
+  }
+  const msg: Message = {
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    senderId: sender,
+    text,
+    time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+  };
+  // 写入共享消息存储（双方可见）
+  const messages = loadSharedMessages(sender, contactName);
+  messages.push(msg);
+  saveSharedMessages(sender, contactName, messages);
+  // 确保接收方的会话列表里有发送者的对话
+  ensureRecipientConversation(sender, contactName);
+  // 更新发送者的会话列表元数据
+  const convIdx = conversations.findIndex((c) => c.name === contactName);
+  if (convIdx >= 0) {
+    conversations[convIdx] = { ...conversations[convIdx], lastMessage: text, time: "刚刚" };
+    saveConversations();
+  }
+  notify();
+  return msg;
+}
+```
 
 ---
 
