@@ -115,7 +115,6 @@ def health():
         "status": "ok",
         "message": "Fiund API is running",
         "version": "1.0.0",
-        "database": DATABASE,
         "endpoints": [
             "GET  /api/health",
             "GET  /api/items",

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useConversation, addMessage, getMessagesBetween } from "@/data/chats";
+import { useConversation, addMessage, getMessagesBetween, type Message } from "@/data/chats";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ChatPage({ params }: { params: { id: string } }) {
@@ -12,20 +12,23 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const [input, setInput] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* 从共享存储加载消息 + 轮询检测新消息 */
   useEffect(() => {
     if (!conv?.name || !username) {
-      console.log("[chat] 跳过加载: conv.name=", conv?.name, "username=", username);
       setMessages([]);
       return;
     }
     const load = () => {
       const msgs = getMessagesBetween(username, conv.name);
-      console.log("[chat] 加载消息:", { username, contact: conv.name, count: msgs.length, msgs });
-      setMessages([...msgs]);
+      setMessages((prev) => {
+        if (prev.length === msgs.length && (prev.length === 0 || prev[prev.length - 1].id === msgs[msgs.length - 1].id)) {
+          return prev; // 消息无变化，不触发重渲染
+        }
+        return [...msgs];
+      });
     };
     load();
     const timer = setInterval(load, 500);
@@ -57,14 +60,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   function handleSend() {
     const text = input.trim();
     if (!text || !conv) return;
-    console.log("[chat] 发送消息:", { text, username, contactName: conv.name });
-    const msg = addMessage(text, username, conv.name);
-    console.log("[chat] addMessage返回:", msg);
+    addMessage(text, username, conv.name);
     setInput("");
-    // 立即刷新消息列表
-    const updated = getMessagesBetween(username, conv.name);
-    console.log("[chat] 发送后消息数:", updated.length);
-    setMessages([...updated]);
+    setMessages([...getMessagesBetween(username, conv.name)]);
   }
 
   return (

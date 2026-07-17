@@ -31,7 +31,8 @@ function loadAvatarMap(): Record<string, string> {
   try {
     const raw = localStorage.getItem("fiund_avatars");
     return raw ? JSON.parse(raw) : {};
-  } catch {
+  } catch (e) {
+    console.warn("[Auth] 加载头像数据失败:", e);
     return {};
   }
 }
@@ -53,7 +54,8 @@ function loadUsers(): Record<string, UserRecord> {
   try {
     const raw = localStorage.getItem("fiund_users");
     return raw ? JSON.parse(raw) : {};
-  } catch {
+  } catch (e) {
+    console.warn("[Auth] 加载用户数据失败:", e);
     return {};
   }
 }
@@ -83,7 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const map = loadAvatarMap();
         if (map[currentName]) setAvatarState(map[currentName]);
       }
-    } catch {}
+    } catch (e) {
+      console.warn("[Auth] 恢复登录状态失败:", e);
+    }
   }, []);
 
   function register(name: string, password: string, emailAddress: string): boolean {
@@ -111,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const users = loadUsers();
     const user = users[trimmed];
     if (!user) return false; // 邮箱未注册
-    if (password !== undefined && user.password !== password) return false;
+    if (user.password !== password) return false;
 
     setIsLoggedIn(true);
     setUsernameState(user.username);
@@ -133,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setEmailState("");
     try {
       localStorage.removeItem("fiund_logged_in");
+      localStorage.removeItem("fiund_username");
       localStorage.removeItem("fiund_email");
     } catch {}
   }

@@ -84,7 +84,7 @@ export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
     ? localStorage.getItem("fiund_username") || ""
     : "";
 
-  const newItem: Item = { ...item, id: Date.now(), date: "刚刚", owner };
+  const newItem: Item = { ...item, id: Date.now() + Math.floor(Math.random() * 1000), date: "刚刚", owner };
   dynamicItems = [newItem, ...dynamicItems];
   saveDynamicItems();
   notify();

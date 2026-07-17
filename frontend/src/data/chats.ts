@@ -14,7 +14,7 @@ export interface Conversation {
   lastMessage: string;
   time: string;
   unread: number;
-  messages: Message[];
+  messages?: Message[];  // 已弃用，消息已迁移到共享存储
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -37,42 +37,10 @@ function getKey(username: string) {
 /** 新用户初始化默认会话 */
 function getDefaultConversations(): Conversation[] {
   return [
-    {
-      id: 1,
-      name: "张三",
-      avatar: "张",
-      lastMessage: "",
-      time: "",
-      unread: 0,
-      messages: [],
-    },
-    {
-      id: 2,
-      name: "李四",
-      avatar: "李",
-      lastMessage: "",
-      time: "",
-      unread: 0,
-      messages: [],
-    },
-    {
-      id: 3,
-      name: "王五",
-      avatar: "王",
-      lastMessage: "",
-      time: "",
-      unread: 0,
-      messages: [],
-    },
-    {
-      id: 4,
-      name: "赵六",
-      avatar: "赵",
-      lastMessage: "",
-      time: "",
-      unread: 0,
-      messages: [],
-    },
+    { id: 1, name: "张三", avatar: "张", lastMessage: "", time: "", unread: 0 },
+    { id: 2, name: "李四", avatar: "李", lastMessage: "", time: "", unread: 0 },
+    { id: 3, name: "王五", avatar: "王", lastMessage: "", time: "", unread: 0 },
+    { id: 4, name: "赵六", avatar: "赵", lastMessage: "", time: "", unread: 0 },
   ];
 }
 
@@ -183,7 +151,6 @@ export function findOrCreateConversation(name: string, username?: string): numbe
     lastMessage: "",
     time: "刚刚",
     unread: 0,
-    messages: [],
   };
   conversations = [...conversations, newConv];
   saveConversations();
@@ -251,19 +218,15 @@ function ensureRecipientConversation(senderName: string, recipientName: string) 
         lastMessage: "",
         time: "刚刚",
         unread: 1,
-        messages: [],
       });
       localStorage.setItem(recipientKey, JSON.stringify(recipientConvs));
-      console.log("[ensureRecipient] 已为", recipientName, "创建与", senderName, "的会话, id:", newId);
     }
   } catch {}
 }
 
 /** 发送消息（写入共享存储 + 更新发送者的会话元数据 + 确保接收方有对话） */
 export function addMessage(text: string, sender: string, contactName: string): Message {
-  console.log("[addMessage] 入参:", { text, sender, contactName });
   if (!sender || !contactName) {
-    console.warn("[addMessage] sender或contactName为空，跳过");
     return { id: 0, senderId: "", text: "", time: "" };
   }
 
@@ -273,7 +236,7 @@ export function addMessage(text: string, sender: string, contactName: string): M
   }
 
   const msg: Message = {
-    id: Date.now(),
+    id: Date.now() + Math.floor(Math.random() * 1000),
     senderId: sender,
     text,
     time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
@@ -283,7 +246,6 @@ export function addMessage(text: string, sender: string, contactName: string): M
   const messages = loadSharedMessages(sender, contactName);
   messages.push(msg);
   saveSharedMessages(sender, contactName, messages);
-  console.log("[addMessage] 已保存到:", getPairKey(sender, contactName), "消息数:", messages.length);
 
   // 确保接收方的会话列表里有发送者的对话
   ensureRecipientConversation(sender, contactName);
