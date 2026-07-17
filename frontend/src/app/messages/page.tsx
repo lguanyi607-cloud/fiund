@@ -33,7 +33,7 @@ export default function ProfilePage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  const myItemsCount = allItems.filter((item) => item.id > 1000000).length;
+  const myItemsCount = allItems.filter((item) => item.owner === username).length;
   const favCount = favIds.length;
   const historyCount = historyItems.length;
 
@@ -287,7 +287,7 @@ export default function ProfilePage() {
             >
               立即登录
             </button>
-            <p className="text-xs text-gray-300 mt-3">后续将接入 Supabase Auth 实现真实登录</p>
+            <p className="text-xs text-gray-300 mt-3">登录后可使用所有功能，数据按账号隔离</p>
           </div>
         </div>
       )}
