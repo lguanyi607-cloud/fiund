@@ -38,6 +38,10 @@ export default function LoginPromptModal({ open, onClose }: LoginPromptModalProp
       setError("请输入邮箱");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("邮箱格式不正确");
+      return;
+    }
     if (!pwd) {
       setError("请输入密码");
       return;
@@ -53,9 +57,9 @@ export default function LoginPromptModal({ open, onClose }: LoginPromptModalProp
         setError("两次密码不一致");
         return;
       }
-      const ok = register(name, pwd, email);
-      if (!ok) {
-        setError("该邮箱已被注册");
+      const result = register(name, pwd, email);
+      if (result !== true) {
+        setError(result);
         return;
       }
     } else {

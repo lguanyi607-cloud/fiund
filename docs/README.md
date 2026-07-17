@@ -56,6 +56,7 @@ fiund/
 │
 └── docs/                          # 实训文档
     ├── README.md                  # 本文档
+    ├── API.md                     # 后端 API 接口文档
     ├── prompt_log.md              # AI 工具运用日志
     └── supabase_init.sql          # 早期 Supabase 数据库脚本（已弃用）
 ```
@@ -146,6 +147,8 @@ curl -X POST http://localhost:5000/api/items \
   -H "Content-Type: application/json" \
   -d '{"title": "二手教材", "description": "九成新", "price": 15, "type": "market"}'
 ```
+
+详细接口文档（含请求/响应格式、参数说明、数据库表结构）请参阅 [API.md](./API.md)。
 
 ## 认证系统
 

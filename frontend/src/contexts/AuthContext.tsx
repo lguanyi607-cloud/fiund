@@ -8,7 +8,7 @@ interface AuthContextType {
   email: string;
   avatar: string | null;
   login: (email: string, password: string) => boolean;
-  register: (username: string, password: string, email: string) => boolean;
+  register: (username: string, password: string, email: string) => true | string;
   logout: () => void;
   setUsername: (name: string) => void;
   setAvatar: (dataUrl: string | null) => void;
@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   email: "",
   avatar: null,
   login: () => false,
-  register: () => false,
+  register: () => true as true | string,
   logout: () => {},
   setUsername: () => {},
   setAvatar: () => {},
@@ -94,12 +94,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  function register(name: string, password: string, emailAddress: string): boolean {
+  function register(name: string, password: string, emailAddress: string): true | string {
     const users = loadUsers();
-    if (users[emailAddress]) return false; // 邮箱已注册
+    if (users[emailAddress]) return "该邮箱已被注册";
     // 检查用户名是否已被使用（防止数据串号）
     const nameTaken = Object.values(users).some((u) => u.username === name);
-    if (nameTaken) return false;
+    if (nameTaken) return "该用户名已被使用";
     users[emailAddress] = { username: name, password };
     saveUsers(users);
 

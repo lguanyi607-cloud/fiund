@@ -22,6 +22,28 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+
+# ═══ 全局错误处理（返回 JSON 而非 HTML） ════════════════
+
+@app.errorhandler(400)
+def bad_request(e):
+    return jsonify({"error": "请求格式错误"}), 400
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "接口不存在"}), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return jsonify({"error": "请求方法不允许"}), 405
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"error": "服务器内部错误"}), 500
+
 # 数据库文件路径（与 app.py 同目录）
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
 
@@ -187,6 +209,17 @@ def create_item():
     if not data or not data.get("title"):
         return jsonify({"error": "title 为必填项"}), 400
 
+    # 校验 type 字段
+    valid_types = ("market", "lost", "found")
+    item_type = data.get("type", "market")
+    if item_type not in valid_types:
+        return jsonify({"error": f"type 必须为 {', '.join(valid_types)} 之一"}), 400
+
+    # 校验 price 字段
+    price = data.get("price")
+    if price is not None and price < 0:
+        return jsonify({"error": "price 不能为负数"}), 400
+
     db = get_db()
     cursor = db.execute(
         "INSERT INTO items (title, description, detail, price, type, category, location, contact, date) "
@@ -195,8 +228,8 @@ def create_item():
             data["title"],
             data.get("description", ""),
             data.get("detail", ""),
-            data.get("price"),
-            data.get("type", "market"),
+            price,
+            item_type,
             data.get("category"),
             data.get("location"),
             data.get("contact", ""),
