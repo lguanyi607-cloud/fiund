@@ -38,10 +38,14 @@ function loadAvatarMap(): Record<string, string> {
 }
 
 function saveAvatarForUser(username: string, dataUrl: string | null) {
-  const map = loadAvatarMap();
-  if (dataUrl) map[username] = dataUrl;
-  else delete map[username];
-  localStorage.setItem("fiund_avatars", JSON.stringify(map));
+  try {
+    const map = loadAvatarMap();
+    if (dataUrl) map[username] = dataUrl;
+    else delete map[username];
+    localStorage.setItem("fiund_avatars", JSON.stringify(map));
+  } catch (e) {
+    console.warn("[Auth] 保存头像失败（可能存储空间不足）:", e);
+  }
 }
 
 /** 用户表：按邮箱索引 → { username, password } */
@@ -93,6 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function register(name: string, password: string, emailAddress: string): boolean {
     const users = loadUsers();
     if (users[emailAddress]) return false; // 邮箱已注册
+    // 检查用户名是否已被使用（防止数据串号）
+    const nameTaken = Object.values(users).some((u) => u.username === name);
+    if (nameTaken) return false;
     users[emailAddress] = { username: name, password };
     saveUsers(users);
 

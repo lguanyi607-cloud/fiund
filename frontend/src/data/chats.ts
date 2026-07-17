@@ -100,10 +100,6 @@ function migrateOldData(username: string) {
       }
       localStorage.removeItem("fiund_chats");
     }
-
-    // 尝试从旧的按用户 key 迁移（之前的 per-user 格式）
-    const oldUserKey = `fiund_chats_${username}`;
-    // 这个 key 和 newKey 相同，已经在上面检查过了
   } catch {}
 }
 
@@ -301,26 +297,4 @@ export function useConversation(id: number, username?: string): Conversation | u
   }, [id, username]);
 
   return conv;
-}
-
-/** React Hook —— 获取两人之间的共享消息列表 */
-export function useMessages(myUsername: string | undefined, contactName: string | undefined): Message[] {
-  const [messages, setMessages] = useState<Message[]>([]);
-
-  useEffect(() => {
-    if (myUsername && contactName) {
-      setMessages(loadSharedMessages(myUsername, contactName));
-    } else {
-      setMessages([]);
-    }
-    const sub = () => {
-      if (myUsername && contactName) {
-        setMessages(loadSharedMessages(myUsername, contactName));
-      }
-    };
-    listeners.add(sub);
-    return () => { listeners.delete(sub); };
-  }, [myUsername, contactName]);
-
-  return messages;
 }

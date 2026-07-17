@@ -41,59 +41,10 @@ export const itemsApi = {
     });
   },
 
-  /** 更新物品 */
-  update(id: number, data: Record<string, any>) {
-    return request<{ message: string; item: any }>(`/items/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-  },
-
   /** 删除/下架物品 */
   remove(id: number) {
     return request<{ message: string }>(`/items/${id}`, {
       method: "DELETE",
-    });
-  },
-};
-
-/* ─── 认证接口 ─── */
-export const authApi = {
-  register(email: string, password: string) {
-    return request<{ message: string; user: any }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-  },
-  login(email: string, password: string) {
-    return request<{ message: string; access_token: string; user: any }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-  },
-  logout() {
-    return request<{ message: string }>("/auth/logout", { method: "POST" });
-  },
-};
-
-/* ─── 消息接口 ─── */
-export const messagesApi = {
-  getConversations() {
-    return request<{ conversations: any[] }>("/messages/conversations");
-  },
-  getMessages(conversationId: number) {
-    return request<{ messages: any[] }>(`/messages/${conversationId}`);
-  },
-  send(conversationId: number, senderId: string, content: string) {
-    return request<{ message: string; data: any }>("/messages/", {
-      method: "POST",
-      body: JSON.stringify({ conversation_id: conversationId, sender_id: senderId, content }),
-    });
-  },
-  markRead(conversationId: number, userId: string) {
-    return request<{ message: string }>(`/messages/read/${conversationId}`, {
-      method: "POST",
-      body: JSON.stringify({ user_id: userId }),
     });
   },
 };

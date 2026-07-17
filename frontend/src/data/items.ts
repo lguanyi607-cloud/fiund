@@ -89,7 +89,7 @@ export function addDynamicItem(item: Omit<Item, "id" | "date">): Item {
   saveDynamicItems();
   notify();
 
-  itemsApi.create(item).catch((err) => {
+  itemsApi.create(newItem).catch((err) => {
     console.warn("[API] 物品同步失败（后端可能未启动）:", err.message);
   });
 
