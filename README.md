@@ -66,8 +66,7 @@ fiund/
     ├── prompt_log.md              # AI 工具运用日志
     ├── code-review-round3.png     # AI Code Review 报告截图
     ├── screenshot-backend-api.png # 后端 API 运行截图
-    ├── screenshot-frontend-server.png  # 前端开发服务器截图
-    └── supabase_init.sql          # 早期 Supabase 脚本（已弃用）
+    └── screenshot-frontend-server.png  # 前端开发服务器截图
 ```
 
 ## 本地启动
