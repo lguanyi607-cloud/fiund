@@ -91,6 +91,7 @@ export default function ItemDetailPage({
       alert("请先登录后再私信");
       return;
     }
+    if (!item) return;
     const ownerName = item.owner || item.contact || "匿名用户";
     const chatId = findOrCreateConversation(ownerName, username);
     router.push(`/chat/${chatId}`);
