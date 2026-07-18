@@ -3,7 +3,8 @@ Fiund 校园物品流转平台 - 后端 API
 使用 SQLite 数据库存储数据
 
 启动方式：
-  pip install flask flask-cors
+  pip install -r requirements.txt
+  cp .env.example .env   # 可选：自定义环境变量
   python app.py
 
 接口列表：
@@ -15,12 +16,32 @@ Fiund 校园物品流转平台 - 后端 API
 """
 
 import sqlite3
+import logging
 import os
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# ═══ 环境变量 & 日志配置 ════════════════════════════════
+
+load_dotenv()  # 从 .env 文件加载环境变量
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("fiund")
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS：生产环境限制来源，开发环境放行所有
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+if CORS_ORIGINS == "*":
+    CORS(app)
+else:
+    CORS(app, origins=[o.strip() for o in CORS_ORIGINS.split(",")])
 
 
 # ═══ 全局错误处理（返回 JSON 而非 HTML） ════════════════
@@ -42,10 +63,23 @@ def method_not_allowed(e):
 
 @app.errorhandler(500)
 def internal_error(e):
+    logger.error("服务器内部错误: %s", e)
     return jsonify({"error": "服务器内部错误"}), 500
 
-# 数据库文件路径（与 app.py 同目录）
-DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+
+# ═══ 请求日志 ═══════════════════════════════════════════
+
+@app.before_request
+def log_request():
+    """记录每个 API 请求的方法、路径和来源 IP"""
+    if request.path.startswith("/api/"):
+        logger.info("%s %s from %s", request.method, request.path, request.remote_addr)
+
+# 数据库文件路径（可通过 DATABASE_PATH 环境变量覆盖）
+DATABASE = os.getenv(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db"),
+)
 
 
 # ═══ 数据库连接管理 ═══════════════════════════════════════
@@ -116,7 +150,7 @@ def init_db():
             sample_items,
         )
         conn.commit()
-        print(f"[DB] 已插入 {len(sample_items)} 条示例数据")
+        logger.info("已插入 %d 条示例数据", len(sample_items))
 
     conn.close()
 
@@ -241,6 +275,7 @@ def create_item():
     new_item = row_to_dict(
         db.execute("SELECT * FROM items WHERE id = ?", (cursor.lastrowid,)).fetchone()
     )
+    logger.info("新物品发布: id=%s title=%s", new_item["id"], new_item["title"])
 
     return jsonify({"message": "发布成功", "item": new_item}), 201
 
@@ -257,6 +292,7 @@ def delete_item(item_id):
         return jsonify({"error": "物品不存在"}), 404
 
     remaining = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+    logger.info("物品已删除: id=%d, 剩余 %d 条", item_id, remaining)
     return jsonify({"message": "删除成功", "remaining": remaining})
 
 
@@ -264,9 +300,12 @@ def delete_item(item_id):
 
 if __name__ == "__main__":
     init_db()
-    print("=" * 50)
-    print("Fiund API 已启动")
-    print(f"数据库: {DATABASE}")
-    print("http://localhost:5000/api/health")
-    print("=" * 50)
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
+    FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+    FLASK_DEBUG = os.getenv("FLASK_DEBUG", "1") == "1"
+    logger.info("=" * 40)
+    logger.info("Fiund API 已启动")
+    logger.info("数据库: %s", DATABASE)
+    logger.info("http://%s:%d/api/health", FLASK_HOST, FLASK_PORT)
+    logger.info("=" * 40)
+    app.run(debug=FLASK_DEBUG, host=FLASK_HOST, port=FLASK_PORT)
