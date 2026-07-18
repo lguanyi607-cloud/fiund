@@ -7,6 +7,7 @@ import { getItemById, removeDynamicItem } from "@/data/items";
 import { useFavorites, toggleFavorite } from "@/data/favorites";
 import { useWants, toggleWant } from "@/data/wants";
 import { recordView } from "@/data/history";
+import { useComments } from "@/data/comments";
 import { findOrCreateConversation } from "@/data/chats";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -28,7 +29,7 @@ export default function ItemDetailPage({
   /* 留言功能 */
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState<{ author: string; text: string; time: string }[]>([]);
+  const [comments, addLocalComment] = useComments(itemId);
 
   // 记录浏览历史
   useEffect(() => {
@@ -73,8 +74,8 @@ export default function ItemDetailPage({
     const text = commentText.trim();
     if (!text) return;
     const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-    setComments((prev) => [{ author: username || "匿名用户", text, time }, ...prev]);
+    const time = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    addLocalComment({ author: username || "匿名用户", text, time });
     setCommentText("");
     setShowCommentInput(false);
   }
