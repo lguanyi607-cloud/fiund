@@ -6,6 +6,8 @@ Fiund 是一个面向高校校园的全栈 Web 应用，旨在为师生提供一
 
 **线上访问：** https://fiund.vercel.app
 
+**演示视频：** https://pan.quark.cn/s/e18dd0112927
+
 ## 技术栈
 
 | 层级 | 技术选型 | 说明 |
